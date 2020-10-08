@@ -3,7 +3,8 @@
     "version": "1.1",
     "description": "Bookmarkalarm helps you set alarm to each bookmark to look at it at the proper time",
     "permissions": [
-        "bookmarks"
+        "bookmarks",
+        "tabs"
     ],
     "browser_action": {
         "default_title": "Bookmarkalarm",
