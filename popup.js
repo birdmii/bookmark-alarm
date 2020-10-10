@@ -51,11 +51,18 @@ function dumpNode(bookmarkNode, query) {
 	let options = bookmarkNode.children ?
 		$('<span>[<a href="#" id="addlink">Add to here</a>]</span>') :
 		$('<span>[<a id="editlink" href="#">Edit</a> ' +
-		'<a id="deletelink" href="#">Delete</a>]</span>');
-	let edit = bookmarkNode.children ? 
-		$('<table><tr><td>Name</td><td><input id="title"></td></tr>' +
-		'<tr><td>URL</td><td><input id="url"></td></tr></table>') :
-		$('<input>');  
+		'<a id="deletelink" href="#">Delete</a> '+
+		'<a id="alarmlink" href="#">Alarm</a>]</span>');
+	// let edit = bookmarkNode.children ? 
+	// 	$('<table><tr><td>Name</td><td><input id="title"></td></tr>' +
+	// 	'<tr><td>URL</td><td><input id="url"></td></tr></table>') :
+	// 	$('<input>');  
+	let alarm = $('<div><input type="radio" id="test" name="alarmterm" value="0.1"> <label for="0.5min">test</label><br> ' +
+			'<input type="radio" id="5min" name="alarmterm" value="5" checked> <label for="5min">5min</label><br> ' +
+			'<input type="radio" id="15min" name="alarmterm" value="15"> <label for="15min">15min</label><br>  ' +
+			'<input type="radio" id="30min" name="alarmterm" value="30"> <label for="30min">30min</label><br> ' +
+			'<input type="submit" id="setalarm" value="SET">' +
+			'<input type="submit" id="clear" value="CLEAR"></div>');
 
 	span.hover(function() {
 		span.append(options);
@@ -69,7 +76,7 @@ function dumpNode(bookmarkNode, query) {
 		$('#editlink').click(function() {
 			let title = anchor.text();
 			// let link = anchor[0].href;
-			edit.val(title);
+			// edit.val(title);
 			let editedTitle = prompt('Edit Title',title);
 			if(editedTitle !== null && editedTitle !== title) {
 				chrome.bookmarks.update(String(bookmarkNode.id), {
@@ -77,6 +84,31 @@ function dumpNode(bookmarkNode, query) {
 				});
 				anchor.text(editedTitle);
 			}
+		});
+
+		$('#alarmlink').click(function() {
+			let title = anchor.text();
+			let link = anchor[0].href;
+			
+			span.append(alarm);
+
+			$('#setalarm').click(function() {
+				let alarmTerm = $('input[name=alarmterm]:checked').val();
+				let minutes = parseFloat(alarmTerm);
+				chrome.browserAction.setBadgeText({text: 'ON'});
+				chrome.alarms.create(link, {delayInMinutes: minutes});
+				chrome.storage.sync.set({minutes: minutes});
+				alert('You \'ll get alarmed in ' +minutes + 'min about ' + title);
+
+				alarm.remove();
+
+			});
+
+			$('#clear').click(function() {
+				chrome.browserAction.setBadgeText({text: ''});
+				chrome.alarms.clearAll();
+			});
+
 		});
 
 		$('#addlink').click(function() {
@@ -100,6 +132,7 @@ function dumpNode(bookmarkNode, query) {
 	//unhover
 	function() {
 		options.remove();
+		alarm.remove();
 	}).append(anchor);    
 	
 	let li = $(bookmarkNode.title ? '<li>' : '<div>').append(span);
@@ -109,7 +142,6 @@ function dumpNode(bookmarkNode, query) {
 
 	return li;
 }
-
 
 document.addEventListener('DOMContentLoaded', function() {
 	dumpBookmarks();
