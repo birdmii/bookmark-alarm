@@ -57,8 +57,8 @@ function dumpNode(bookmarkNode, query) {
 	// 	$('<table><tr><td>Name</td><td><input id="title"></td></tr>' +
 	// 	'<tr><td>URL</td><td><input id="url"></td></tr></table>') :
 	// 	$('<input>');  
-	let alarm = $('<div><input type="radio" id="test" name="alarmterm" value="0.1"> <label for="0.5min">test</label><br> ' +
-			'<input type="radio" id="5min" name="alarmterm" value="5" checked> <label for="5min">5min</label><br> ' +
+	let alarm = $('<div><input type="radio" id="test" name="alarmterm" value="0.1" checked> <label for="0.5min">test</label><br> ' +
+			'<input type="radio" id="5min" name="alarmterm" value="5" > <label for="5min">5min</label><br> ' +
 			'<input type="radio" id="15min" name="alarmterm" value="15"> <label for="15min">15min</label><br>  ' +
 			'<input type="radio" id="30min" name="alarmterm" value="30"> <label for="30min">30min</label><br> ' +
 			'<input type="submit" id="setalarm" value="SET">' +
@@ -89,24 +89,26 @@ function dumpNode(bookmarkNode, query) {
 		$('#alarmlink').click(function() {
 			let title = anchor.text();
 			let link = anchor[0].href;
-			
 			span.append(alarm);
 
 			$('#setalarm').click(function() {
-				let alarmTerm = $('input[name=alarmterm]:checked').val();
-				let minutes = parseFloat(alarmTerm);
-				chrome.browserAction.setBadgeText({text: 'ON'});
-				chrome.alarms.create(link, {delayInMinutes: minutes});
-				chrome.storage.sync.set({minutes: minutes});
-				alert('You \'ll get alarmed in ' +minutes + 'min about ' + title);
-
-				alarm.remove();
-
+				getAlarmCnt(function(count) {
+					let notificationCnt = count.toString();
+					// alert(notificationCnt);
+					let alarmTerm = $('input[name=alarmterm]:checked').val();
+					let minutes = parseFloat(alarmTerm);
+					chrome.browserAction.setBadgeText({text: notificationCnt});
+					chrome.alarms.create(link, {delayInMinutes: minutes});
+					chrome.storage.sync.set({minutes: minutes});
+					alert('You \'ll get alarmed in ' +minutes + 'min about ' + title);
+					alarm.remove();
+					window.close();
+				});
 			});
 
 			$('#clear').click(function() {
 				chrome.browserAction.setBadgeText({text: ''});
-				chrome.alarms.clearAll();
+				chrome.alarms.clear(link);
 			});
 
 		});
@@ -139,9 +141,14 @@ function dumpNode(bookmarkNode, query) {
 	if(bookmarkNode.children && bookmarkNode.children.length > 0) {
 		li.append(dumpTreeNodes(bookmarkNode.children, query));
 	}
-
 	return li;
 }
+
+function getAlarmCnt(callback) {
+    chrome.alarms.getAll(function(alarms) { callback(alarms.length+1) }); 
+}
+
+
 
 document.addEventListener('DOMContentLoaded', function() {
 	dumpBookmarks();
