@@ -18,11 +18,11 @@
         "default_popup": "popup.html"
     },
     "manifest_version": 2,
-    "content_security_policy": "script-src 'self' https://ajax.googleapis.com; object-src 'self'",
+    "content_security_policy": "script-src 'self' https://ajax.googleapis.com; object-src 'self'", 
     "icons": {
-        "16":"bookmarkalarm16.png",
-        "32":"bookmarkalarm32.png",
-        "48":"bookmarkalarm48.png",
-        "128":"bookmarkalarm128.png"
+        "16":"assets/bookmarkalarm16.png",
+        "32":"assets/bookmarkalarm32.png",
+        "48":"assets/bookmarkalarm48.png",
+        "128":"assets/bookmarkalarm128.png"
     }
 }

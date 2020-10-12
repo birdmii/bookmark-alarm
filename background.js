@@ -5,7 +5,7 @@ chrome.alarms.onAlarm.addListener(function(alarm) {
     
     chrome.notifications.create({
         type:     'basic',
-        iconUrl:  'bookmarkalarm.png',
+        iconUrl:  'assets/bookmarkalarm.png',
         title:    'Don\'t forget!',
         message:  'Time to read this bookmark!',
         buttons: [
@@ -28,8 +28,8 @@ chrome.alarms.onAlarm.addListener(function(alarm) {
     setTimeout(function(){ 
         if(confirm("Would like to read " + title + "?"))    
             window.open(alarm.name, '_blank'); }, 2000);
-  });
+});
 
-  function getAlarmCnt(callback) {
+function getAlarmCnt(callback) {
     chrome.alarms.getAll(function(alarms) { callback(alarms.length) }); 
 }

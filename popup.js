@@ -23,7 +23,7 @@ function dumpTreeNodes(bookmarkTreeNodes, query) {
 
 function dumpNode(bookmarkNode, query) {
 	let span = $('<span>');
-	let h4 = $('<h4>');
+	let h4 = $('<span>'); //!!!need to change variable name
 	let anchor = $('<a>');
 	if(bookmarkNode.title) {
 		if(query && !bookmarkNode.children) {
@@ -37,6 +37,7 @@ function dumpNode(bookmarkNode, query) {
 	if(!bookmarkNode.url) {
 		h4.text(bookmarkNode.title);
 		span.append(h4);
+		
 	} else {
 		anchor.attr('href', bookmarkNode.url);
 		anchor.text(bookmarkNode.title);
@@ -49,10 +50,10 @@ function dumpNode(bookmarkNode, query) {
 	//When hovered item is a folder, show add button 
 	//when it's a bookmark, show edit and delete button
 	let options = bookmarkNode.children ?
-		$('<span>[<a href="#" id="addlink">Add to here</a>]</span>') :
-		$('<span>[<a id="editlink" href="#">Edit</a> ' +
-		'<a id="deletelink" href="#">Delete</a> '+
-		'<a id="alarmlink" href="#">Alarm</a>]</span>');
+		$('<span><a href="#" id="addlink"><img src="assets/add.png" width=15></a></span>') :
+		$('<span><a id="editlink" href="#"><img src="assets/edit.png" width=15></a> ' +
+		'<a id="deletelink" href="#"><img src="assets/delete.png" width=15></a> '+
+		'<a id="alarmlink" href="#"><img src="assets/alarm.png" width=15></a></span>');
 	// let edit = bookmarkNode.children ? 
 	// 	$('<table><tr><td>Name</td><td><input id="title"></td></tr>' +
 	// 	'<tr><td>URL</td><td><input id="url"></td></tr></table>') :
