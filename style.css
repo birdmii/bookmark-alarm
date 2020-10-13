@@ -1,6 +1,7 @@
 body {
     width: 400px;
-    margin: 40px 20px;
+    margin: 20px 20px 50px 20px;
+    color: #212121;
 }
 
 ul, li {
@@ -19,7 +20,7 @@ ul, li {
     height: 30px;
     border-radius: 0;
     border-style: none;
-    border-bottom: 1px solid #000;
+    border-bottom: 1px solid #212121;
 }
 
 #search:focus {
@@ -29,16 +30,17 @@ ul, li {
 .directories {
     font-size: 1rem;
     font-weight: 800;
+    background-color: #FFC107;
 }
 
-.option_icon {
+.option_icon_md {
     padding-left: 5px;
     width: 15px;
 }
 
-.option_icon_sm {
+.option_icon_lg {
     padding-left: 5px;
-    width: 10px;
+    width: 20px;
 }
 
 a {
@@ -50,6 +52,6 @@ a {
     margin: 5px;
     width: 60px;
     border-style: none;
-    background-color: #000;
+    background-color: #212121;
     color: #fff;
 }

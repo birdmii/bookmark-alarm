@@ -22,9 +22,9 @@ function dumpTreeNodes(bookmarkTreeNodes, query) {
 }
 
 function dumpNode(bookmarkNode, query) {
-	let span = $('<span class="bookmark_item">');
+	let span = $('<span>');
 	let directories = $('<span class="directories">');
-	let anchor = $('<a>');
+	let bookmarkItem = $('<a class="bookmark_item">');
 	if(bookmarkNode.title) {
 		if(query && !bookmarkNode.children) {
 			if(String(bookmarkNode.title).indexOf(query) == -1) {
@@ -38,12 +38,12 @@ function dumpNode(bookmarkNode, query) {
 		directories.text(bookmarkNode.title);
 		span.append(directories);
 	} else {
-		anchor.attr('href', bookmarkNode.url);
-		anchor.text(bookmarkNode.title);
-		anchor.click(function() {
+		bookmarkItem.attr('href', bookmarkNode.url);
+		bookmarkItem.text(bookmarkNode.title);
+		bookmarkItem.click(function() {
 			chrome.tabs.create({url: bookmarkNode.url});
 		});
-		span.append(anchor);
+		span.append(bookmarkItem);
 	}
 
 	let li = $(bookmarkNode.title ? '<li>' : '<div>').append(span);
@@ -54,16 +54,16 @@ function dumpNode(bookmarkNode, query) {
 	//When hovered item is a folder, show add button 
 	//when it's a bookmark, show edit and delete button
 	let options = bookmarkNode.children ?
-		$('<span><a href="#" id="addlink"><img src="assets/add.png" class="option_icon"></a></span>') :
-		$('<span><a id="editlink" href="#"><img src="assets/edit.png" class="option_icon"></a> ' +
-		'<a id="deletelink" href="#"><img src="assets/delete.png" class="option_icon"></a> '+
-		'<a id="alarmlink" href="#"><img src="assets/alarm.png" class="option_icon"></a></span>');
+		$('<span><span id="addlink" class="option_btn"><img src="assets/add.png" class="option_icon_lg"></span></span>') :
+		$('<span><span id="editlink" class="option_btn"><img src="assets/edit.png" class="option_icon_md"></span> ' +
+		'<span id="deletelink" class="option_btn"><img src="assets/delete.png" class="option_icon_md"></span> '+
+		'<span id="alarmlink" class="option_btn"><img src="assets/alarm.png" class="option_icon_md"></span></span>');
 	
 	// let edit = bookmarkNode.children ? 
 	// 	$('<table><tr><td>Name</td><td><input id="title"></td></tr>' +
 	// 	'<tr><td>URL</td><td><input id="url"></td></tr></table>') :
 	// 	$('<input>');  
-	let alarm = $('<div class="setAlarmPanel"><input type="radio" id="test" name="alarmterm" value="0.1" checked> <label for="0.5min">test</label> ' +
+	let alarm = $('<div class="setAlarmPanel"><input type="radio" id="test" name="alarmterm" value="1" checked> <label for="0.5min">test</label> ' +
 			'<input type="radio" id="5min" name="alarmterm" value="5" > <label for="5min">5min</label>' +
 			'<input type="radio" id="15min" name="alarmterm" value="15"> <label for="15min">15min</label> ' +
 			'<input type="radio" id="30min" name="alarmterm" value="30"> <label for="30min">30min</label><br> ' +
@@ -80,24 +80,25 @@ function dumpNode(bookmarkNode, query) {
 		});//end of deletelink click
 
 		$('#editlink').click(function() {
-			let title = anchor.text();
-			// let link = anchor[0].href;
+			let title = bookmarkItem.text();
+			// let link = bookmarkItem[0].href;
 			// edit.val(title);
 			let editedTitle = prompt('Edit Title',title);
 			if(editedTitle !== null && editedTitle !== title) {
 				chrome.bookmarks.update(String(bookmarkNode.id), {
 					title: editedTitle
 				});
-				anchor.text(editedTitle);
+				bookmarkItem.text(editedTitle);
 			}
 		});//end of editlink click
 
-		$('#alarmlink').click(function() {
-			let title = anchor.text();
-			let link = anchor[0].href;
+		$('#alarmlink').on('click', function(event) {
+			let title = bookmarkItem.text();
+			let link = bookmarkItem[0].href;
 			span.append(alarm);
 			$('#setalarm').click(function() {
 				getAlarmCnt(function(count) {
+					count++;
 					let notificationCnt = count.toString();
 					// alert(notificationCnt);
 					let alarmTerm = $('input[name=alarmterm]:checked').val();
@@ -110,10 +111,22 @@ function dumpNode(bookmarkNode, query) {
 					window.close();
 				});
 			});
-
+			//this component needs to be moved
 			$('#clear').click(function() {
-				chrome.browserAction.setBadgeText({text: ''});
-				chrome.alarms.clear(link);
+				getAlarmCnt(function(count) {
+					count--;
+					let notificationCnt = count.toString();
+					if(notificationCnt === '0') 
+						chrome.browserAction.setBadgeText({text: ''});
+					else 
+						chrome.browserAction.setBadgeText({text: notificationCnt});
+					chrome.alarms.clear(link, function(wasCleared) {
+						if(wasCleared)
+							alert("The bookmark alarm has removed successfully!");
+						else 
+							alert("Oops! Error has occured..");
+					});
+				});
 			});
 		});//end of alarmlink click
 
@@ -128,7 +141,7 @@ function dumpNode(bookmarkNode, query) {
 						$('#bookmarks').empty();
 						dumpBookmarks();
 					} else {
-						alert("Oops! Error has occured");
+						alert("Oops! Error has occured..");
 					}
 				});
 				
@@ -139,12 +152,12 @@ function dumpNode(bookmarkNode, query) {
 	function() {
 		options.remove();
 		alarm.remove();
-	}).append(anchor); //end of hover
+	}).append(bookmarkItem); //end of hover
 	return li;
 }
 
 function getAlarmCnt(callback) {
-    chrome.alarms.getAll(function(alarms) { callback(alarms.length+1) }); 
+    chrome.alarms.getAll(function(alarms) { callback(alarms.length) }); 
 }
 
 document.addEventListener('DOMContentLoaded', function() {
