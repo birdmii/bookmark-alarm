@@ -22,8 +22,8 @@ function dumpTreeNodes(bookmarkTreeNodes, query) {
 }
 
 function dumpNode(bookmarkNode, query) {
-	let span = $('<span>');
-	let h4 = $('<span>'); //!!!need to change variable name
+	let span = $('<span class="bookmark_item">');
+	let directories = $('<span class="directories">');
 	let anchor = $('<a>');
 	if(bookmarkNode.title) {
 		if(query && !bookmarkNode.children) {
@@ -35,9 +35,8 @@ function dumpNode(bookmarkNode, query) {
 
 	//When bookmark has a url, a bookmark. If not it's a title
 	if(!bookmarkNode.url) {
-		h4.text(bookmarkNode.title);
-		span.append(h4);
-		
+		directories.text(bookmarkNode.title);
+		span.append(directories);
 	} else {
 		anchor.attr('href', bookmarkNode.url);
 		anchor.text(bookmarkNode.title);
@@ -47,24 +46,30 @@ function dumpNode(bookmarkNode, query) {
 		span.append(anchor);
 	}
 
+	let li = $(bookmarkNode.title ? '<li>' : '<div>').append(span);
+	if(bookmarkNode.children && bookmarkNode.children.length > 0) {
+		li.append(dumpTreeNodes(bookmarkNode.children, query));
+	}
+
 	//When hovered item is a folder, show add button 
 	//when it's a bookmark, show edit and delete button
 	let options = bookmarkNode.children ?
-		$('<span><a href="#" id="addlink"><img src="assets/add.png" width=15></a></span>') :
-		$('<span><a id="editlink" href="#"><img src="assets/edit.png" width=15></a> ' +
-		'<a id="deletelink" href="#"><img src="assets/delete.png" width=15></a> '+
-		'<a id="alarmlink" href="#"><img src="assets/alarm.png" width=15></a></span>');
+		$('<span><a href="#" id="addlink"><img src="assets/add.png" class="option_icon"></a></span>') :
+		$('<span><a id="editlink" href="#"><img src="assets/edit.png" class="option_icon"></a> ' +
+		'<a id="deletelink" href="#"><img src="assets/delete.png" class="option_icon"></a> '+
+		'<a id="alarmlink" href="#"><img src="assets/alarm.png" class="option_icon"></a></span>');
+	
 	// let edit = bookmarkNode.children ? 
 	// 	$('<table><tr><td>Name</td><td><input id="title"></td></tr>' +
 	// 	'<tr><td>URL</td><td><input id="url"></td></tr></table>') :
 	// 	$('<input>');  
-	let alarm = $('<div><input type="radio" id="test" name="alarmterm" value="0.1" checked> <label for="0.5min">test</label><br> ' +
-			'<input type="radio" id="5min" name="alarmterm" value="5" > <label for="5min">5min</label><br> ' +
-			'<input type="radio" id="15min" name="alarmterm" value="15"> <label for="15min">15min</label><br>  ' +
+	let alarm = $('<div class="setAlarmPanel"><input type="radio" id="test" name="alarmterm" value="0.1" checked> <label for="0.5min">test</label> ' +
+			'<input type="radio" id="5min" name="alarmterm" value="5" > <label for="5min">5min</label>' +
+			'<input type="radio" id="15min" name="alarmterm" value="15"> <label for="15min">15min</label> ' +
 			'<input type="radio" id="30min" name="alarmterm" value="30"> <label for="30min">30min</label><br> ' +
-			'<input type="submit" id="setalarm" value="SET">' +
-			'<input type="submit" id="clear" value="CLEAR"></div>');
-
+			'<input type="submit" id="setalarm" class="btn" value="SET">' +
+			'<input type="submit" id="clear" class="btn" value="CLEAR"></div>');
+	
 	span.hover(function() {
 		span.append(options);
 		$('#deletelink').click(function() {
@@ -72,7 +77,7 @@ function dumpNode(bookmarkNode, query) {
 				chrome.bookmarks.remove(String(bookmarkNode.id));
 				span.parent().remove(); 
 			} 
-		});
+		});//end of deletelink click
 
 		$('#editlink').click(function() {
 			let title = anchor.text();
@@ -85,13 +90,12 @@ function dumpNode(bookmarkNode, query) {
 				});
 				anchor.text(editedTitle);
 			}
-		});
+		});//end of editlink click
 
 		$('#alarmlink').click(function() {
 			let title = anchor.text();
 			let link = anchor[0].href;
 			span.append(alarm);
-
 			$('#setalarm').click(function() {
 				getAlarmCnt(function(count) {
 					let notificationCnt = count.toString();
@@ -111,8 +115,7 @@ function dumpNode(bookmarkNode, query) {
 				chrome.browserAction.setBadgeText({text: ''});
 				chrome.alarms.clear(link);
 			});
-
-		});
+		});//end of alarmlink click
 
 		$('#addlink').click(function() {
 			chrome.tabs.query({currentWindow: true, active: true}, function(tabs) {
@@ -130,26 +133,19 @@ function dumpNode(bookmarkNode, query) {
 				});
 				
 			});
-		});
+		});//end of addlink click
 	}, 
 	//unhover
 	function() {
 		options.remove();
 		alarm.remove();
-	}).append(anchor);    
-	
-	let li = $(bookmarkNode.title ? '<li>' : '<div>').append(span);
-	if(bookmarkNode.children && bookmarkNode.children.length > 0) {
-		li.append(dumpTreeNodes(bookmarkNode.children, query));
-	}
+	}).append(anchor); //end of hover
 	return li;
 }
 
 function getAlarmCnt(callback) {
     chrome.alarms.getAll(function(alarms) { callback(alarms.length+1) }); 
 }
-
-
 
 document.addEventListener('DOMContentLoaded', function() {
 	dumpBookmarks();
