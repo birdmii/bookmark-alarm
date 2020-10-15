@@ -2,8 +2,88 @@ $(function() {
 	$('#search').change(function() {
 		$('#bookmarks').empty();
 		dumpBookmarks($('#search').val());
-	});   
+	}); 
+
+	getAlarmCnt(function(count) {
+		if(count !== 0) {
+			let alarmList = getBookmarkAlarms();
+			$('#alarmcontent').append(alarmList);
+			$('#alarmlist_row').show();
+			clearAllAlarm();
+		} else {
+			$('#alarmlist_row').hide();
+		}
+	});
+
+	$('#alarmcontent_list').off('click').on('click', '.clear', function() {
+		let item = $(this).parent();
+		let link = item[0].id;
+		let left = true;
+		getAlarmCnt(function(count) {
+			count--;
+			let notificationCnt = count.toString();
+			if(notificationCnt === '0') {
+				chrome.browserAction.setBadgeText({text: ''});
+				left = false;
+			}
+			else 
+				chrome.browserAction.setBadgeText({text: notificationCnt});
+			
+			chrome.alarms.clear(link, function(wasCleared) {
+				if(wasCleared) {
+					item.remove();
+					if(!left) 
+						$('#alarmlist_row').hide();
+					alert("The bookmark alarm has removed successfully!");
+				}
+				else {
+					alert("40:Oops! Error has occured..");
+				}
+			});
+		});
+	});
 });
+
+function getBookmarkAlarms(obj) {
+	let alarmList = $('#alarmcontent_list');
+	if(obj !== undefined) {
+		let title = obj.alarmtitle
+		let item = '<li id="'+obj.alarmlink+'" class="alarm_item">'+ title + '<span class="clear"><img src="assets/delete.png" class="option_icon_md"></span></li>'
+		// let item = '<li id="'+obj.alarmlink+'" class="alarm_item">'+ title + " ["+obj.alarmlink+"]"+'<span class="clear"><img src="assets/delete.png" class="option_icon_md"></span></li>'
+		$('#alarmlist_row').show();
+		$('#alarmcontent_list').append(item);
+	} else {
+		chrome.alarms.getAll(function(Alarms) {
+			for(let i = 0 ; i < Alarms.length ; i++) {
+				let link = Alarms[i].name;
+				chrome.bookmarks.search(Alarms[i].name, function(BookmarkTreeNodes) {
+					let title = BookmarkTreeNodes[0].title;
+					let item = '<li id="'+link+'" class="alarm_item">'+title + '<span class="clear"><img src="assets/delete.png" class="option_icon_md"></span></span></li>'
+					// let item = '<li id="'+link+'" class="alarm_item">'+title + " ["+link+"]"+'<span class="clear"><img src="assets/delete.png" class="option_icon_md"></span></span></li>'
+					$('#alarmcontent_list').append(item);
+				});	
+			}
+		});
+	}
+	return alarmList;
+}
+
+function clearAllAlarm() {
+	$('#alarmlist_clear_btn').click(function() {
+		if(confirm("Are you sure clear all bookmark alarm?")) {
+			chrome.alarms.clearAll(function(wasCleared) {
+				if(wasCleared) {
+					alert('All bookmark alarm is cleared!');
+					chrome.browserAction.setBadgeText({text: ''});
+				} else {
+					alert('71:Oops! Error has occured..');
+				}
+			});
+			$('#alarmcontent').empty();
+			$('#alarmlist_row').hide();
+		}
+	});
+}
 
 function dumpBookmarks(query) {
 	let bookmarkTreeNodes = chrome.bookmarks.getTree(
@@ -63,12 +143,11 @@ function dumpNode(bookmarkNode, query) {
 	// 	$('<table><tr><td>Name</td><td><input id="title"></td></tr>' +
 	// 	'<tr><td>URL</td><td><input id="url"></td></tr></table>') :
 	// 	$('<input>');  
-	let alarm = $('<div class="setAlarmPanel"><input type="radio" id="test" name="alarmterm" value="1" checked> <label for="0.5min">test</label> ' +
+	let alarm = $('<div class="setAlarmPanel"><input type="radio" id="test" name="alarmterm" value="0.1" checked> <label for="0.5min">test</label> ' +
 			'<input type="radio" id="5min" name="alarmterm" value="5" > <label for="5min">5min</label>' +
 			'<input type="radio" id="15min" name="alarmterm" value="15"> <label for="15min">15min</label> ' +
 			'<input type="radio" id="30min" name="alarmterm" value="30"> <label for="30min">30min</label><br> ' +
-			'<input type="submit" id="setalarm" class="btn" value="SET">' +
-			'<input type="submit" id="clear" class="btn" value="CLEAR"></div>');
+			'<input type="submit" id="setalarm" class="btn" value="SET"></div>');
 	
 	span.hover(function() {
 		span.append(options);
@@ -97,35 +176,22 @@ function dumpNode(bookmarkNode, query) {
 			let link = bookmarkItem[0].href;
 			span.append(alarm);
 			$('#setalarm').click(function() {
-				getAlarmCnt(function(count) {
-					count++;
-					let notificationCnt = count.toString();
-					// alert(notificationCnt);
-					let alarmTerm = $('input[name=alarmterm]:checked').val();
-					let minutes = parseFloat(alarmTerm);
-					chrome.browserAction.setBadgeText({text: notificationCnt});
-					chrome.alarms.create(link, {delayInMinutes: minutes});
-					chrome.storage.sync.set({minutes: minutes});
-					alert('You \'ll get alarmed in ' +minutes + 'min about ' + title);
-					alarm.remove();
-					window.close();
-				});
-			});
-			//this component needs to be moved
-			$('#clear').click(function() {
-				getAlarmCnt(function(count) {
-					count--;
-					let notificationCnt = count.toString();
-					if(notificationCnt === '0') 
-						chrome.browserAction.setBadgeText({text: ''});
-					else 
-						chrome.browserAction.setBadgeText({text: notificationCnt});
-					chrome.alarms.clear(link, function(wasCleared) {
-						if(wasCleared)
-							alert("The bookmark alarm has removed successfully!");
-						else 
-							alert("Oops! Error has occured..");
-					});
+				chrome.alarms.get(link, function(alarm) {
+					if(alarm !== undefined) {
+						alert("The same alarm is already on you list.");
+					} else {
+						getAlarmCnt(function(count) {
+							count++;
+							let notificationCnt = count.toString();
+							let alarmTerm = $('input[name=alarmterm]:checked').val();
+							let minutes = parseFloat(alarmTerm);
+							chrome.browserAction.setBadgeText({text: notificationCnt});
+							chrome.alarms.create(link, {delayInMinutes: minutes});
+							chrome.storage.sync.set({minutes: minutes});
+							alert('You \'ll get alarmed in ' +minutes + 'min about ' + title);
+							getBookmarkAlarms({alarmtitle: title, alarmlink: link});
+						});
+					}
 				});
 			});
 		});//end of alarmlink click
@@ -141,10 +207,9 @@ function dumpNode(bookmarkNode, query) {
 						$('#bookmarks').empty();
 						dumpBookmarks();
 					} else {
-						alert("Oops! Error has occured..");
+						alert("222:Oops! Error has occured..");
 					}
 				});
-				
 			});
 		});//end of addlink click
 	}, 

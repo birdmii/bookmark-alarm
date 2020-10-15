@@ -28,6 +28,7 @@ chrome.alarms.onAlarm.addListener(function(alarm) {
     setTimeout(function(){ 
         if(confirm("Would like to read " + title + "?"))    
             window.open(alarm.name, '_blank'); }, 2000);
+    //ADD: remove the item that the alarm has fired from popup.html
 });
 
 function getAlarmCnt(callback) {
