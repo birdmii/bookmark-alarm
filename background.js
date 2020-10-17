@@ -25,6 +25,11 @@ chrome.alarms.onAlarm.addListener(function(alarm) {
     chrome.bookmarks.search(alarm.name, function(BookmarkTreeNodes) {
         title = BookmarkTreeNodes[0].title;
     });
+    chrome.storage.sync.set({[alarm.name]: "true"});
+    chrome.storage.sync.get(alarm.name, function(result) {
+        console.log(result);
+    });
+
     setTimeout(function(){ 
         if(confirm("Would like to read " + title + "?"))    
             window.open(alarm.name, '_blank'); }, 2000);

@@ -9,7 +9,6 @@ $(function() {
 			let alarmList = getBookmarkAlarms();
 			$('#alarmcontent').append(alarmList);
 			$('#alarmlist_row').show();
-			clearAllAlarm();
 		} else {
 			$('#alarmlist_row').hide();
 		}
@@ -42,13 +41,40 @@ $(function() {
 			});
 		});
 	});
+
+	$('#alarmlist').on('click', '#alarmlist_clear_btn', function() {
+		if(confirm("Are you sure clear all bookmark alarm?")) {
+			chrome.alarms.clearAll(function(wasCleared) {
+				if(wasCleared) {
+					alert('All bookmark alarm is cleared!');
+					chrome.browserAction.setBadgeText({text: ''});
+				} else {
+					alert('52:Oops! Error has occured..');
+				}
+			});
+			$('#alarmcontent').empty();
+			$('#alarmlist_row').hide();
+		}
+	});
+
+	chrome.storage.onChanged.addListener(function(changes, namespace) {
+		for(key in changes) {
+			chrome.storage.sync.get(key, function(result) {
+				if(result[key] === "true") {
+					let item = $('#https://dribbble.com/');
+					console.log(item);
+					item.remove();
+				}
+			});
+		}
+	});
 });
 
 function getBookmarkAlarms(obj) {
 	let alarmList = $('#alarmcontent_list');
 	if(obj !== undefined) {
 		let title = obj.alarmtitle
-		let item = '<li id="'+obj.alarmlink+'" class="alarm_item">'+ title + '<span class="clear"><img src="assets/delete.png" class="option_icon_md"></span></li>'
+		let item = '<li id="'+obj.alarmlink+'" class="alarm_item">'+ title + '<span class="clear"><img src="assets/clear.png" class="option_icon_md"></span></li>'
 		// let item = '<li id="'+obj.alarmlink+'" class="alarm_item">'+ title + " ["+obj.alarmlink+"]"+'<span class="clear"><img src="assets/delete.png" class="option_icon_md"></span></li>'
 		$('#alarmlist_row').show();
 		$('#alarmcontent_list').append(item);
@@ -58,7 +84,7 @@ function getBookmarkAlarms(obj) {
 				let link = Alarms[i].name;
 				chrome.bookmarks.search(Alarms[i].name, function(BookmarkTreeNodes) {
 					let title = BookmarkTreeNodes[0].title;
-					let item = '<li id="'+link+'" class="alarm_item">'+title + '<span class="clear"><img src="assets/delete.png" class="option_icon_md"></span></span></li>'
+					let item = '<li id="'+link+'" class="alarm_item">'+title + '<span class="clear"><img src="assets/clear.png" class="option_icon_md"></span></span></li>'
 					// let item = '<li id="'+link+'" class="alarm_item">'+title + " ["+link+"]"+'<span class="clear"><img src="assets/delete.png" class="option_icon_md"></span></span></li>'
 					$('#alarmcontent_list').append(item);
 				});	
@@ -66,23 +92,6 @@ function getBookmarkAlarms(obj) {
 		});
 	}
 	return alarmList;
-}
-
-function clearAllAlarm() {
-	$('#alarmlist_clear_btn').click(function() {
-		if(confirm("Are you sure clear all bookmark alarm?")) {
-			chrome.alarms.clearAll(function(wasCleared) {
-				if(wasCleared) {
-					alert('All bookmark alarm is cleared!');
-					chrome.browserAction.setBadgeText({text: ''});
-				} else {
-					alert('71:Oops! Error has occured..');
-				}
-			});
-			$('#alarmcontent').empty();
-			$('#alarmlist_row').hide();
-		}
-	});
 }
 
 function dumpBookmarks(query) {
@@ -191,6 +200,7 @@ function dumpNode(bookmarkNode, query) {
 							alert('You \'ll get alarmed in ' +minutes + 'min about ' + title);
 							getBookmarkAlarms({alarmtitle: title, alarmlink: link});
 						});
+						chrome.storage.sync.set({[link]: "false"});
 					}
 				});
 			});
