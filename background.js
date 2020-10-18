@@ -25,9 +25,9 @@ chrome.alarms.onAlarm.addListener(function(alarm) {
     chrome.bookmarks.search(alarm.name, function(BookmarkTreeNodes) {
         title = BookmarkTreeNodes[0].title;
     });
-    chrome.storage.sync.set({[alarm.name]: "true"});
-    chrome.storage.sync.get(alarm.name, function(result) {
-        console.log(result);
+    chrome.storage.sync.set({[removeSpecialChar(alarm.name)]: "fired"});
+    chrome.storage.sync.get(removeSpecialChar(alarm.name), function(result) {
+        // console.log(result);
     });
 
     setTimeout(function(){ 
@@ -38,4 +38,8 @@ chrome.alarms.onAlarm.addListener(function(alarm) {
 
 function getAlarmCnt(callback) {
     chrome.alarms.getAll(function(alarms) { callback(alarms.length) }); 
+}
+
+function removeSpecialChar(urlId){
+    return urlId.replace(/[^\w\s]/gi, '');
 }

@@ -60,9 +60,8 @@ $(function() {
 	chrome.storage.onChanged.addListener(function(changes, namespace) {
 		for(key in changes) {
 			chrome.storage.sync.get(key, function(result) {
-				if(result[key] === "true") {
-					let item = $('#https://dribbble.com/');
-					console.log(item);
+				if(result[key] === "fired") {
+					let item = $("#"+removeSpecialChar(key));
 					item.remove();
 				}
 			});
@@ -74,8 +73,7 @@ function getBookmarkAlarms(obj) {
 	let alarmList = $('#alarmcontent_list');
 	if(obj !== undefined) {
 		let title = obj.alarmtitle
-		let item = '<li id="'+obj.alarmlink+'" class="alarm_item">'+ title + '<span class="clear"><img src="assets/clear.png" class="option_icon_md"></span></li>'
-		// let item = '<li id="'+obj.alarmlink+'" class="alarm_item">'+ title + " ["+obj.alarmlink+"]"+'<span class="clear"><img src="assets/delete.png" class="option_icon_md"></span></li>'
+		let item = '<li id="'+removeSpecialChar(obj.alarmlink)+'" class="alarm_item">'+ title + '<span class="clear"><img src="assets/clear.png" class="option_icon_md"></span></li>'
 		$('#alarmlist_row').show();
 		$('#alarmcontent_list').append(item);
 	} else {
@@ -92,6 +90,10 @@ function getBookmarkAlarms(obj) {
 		});
 	}
 	return alarmList;
+}
+
+function removeSpecialChar(urlId){
+    return urlId.replace(/[^\w\s]/gi, '');
 }
 
 function dumpBookmarks(query) {
@@ -200,7 +202,7 @@ function dumpNode(bookmarkNode, query) {
 							alert('You \'ll get alarmed in ' +minutes + 'min about ' + title);
 							getBookmarkAlarms({alarmtitle: title, alarmlink: link});
 						});
-						chrome.storage.sync.set({[link]: "false"});
+						chrome.storage.sync.set({[removeSpecialChar(link)]: "set"});
 					}
 				});
 			});
