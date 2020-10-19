@@ -1,38 +1,40 @@
 $(function() {
-	$('#search').change(function() {
-		$('#bookmarks').empty();
-		dumpBookmarks($('#search').val());
+	$('#searchBar').change(function() {
+		$('#bookmarkBoard').empty();
+		dumpBookmarks($('#searchBar').val());
 	}); 
 
 	getAlarmCnt(function(count) {
 		if(count !== 0) {
 			let alarmList = getBookmarkAlarms();
 			$('#alarmcontent').append(alarmList);
-			$('#alarmlist_row').show();
+			$('#alarmBoardTopRow').show();
 		} else {
-			$('#alarmlist_row').hide();
+			$('#alarmBoardTopRow').hide();
 		}
 	});
 
-	$('#alarmcontent_list').off('click').on('click', '.clear', function() {
-		let item = $(this).parent();
-		let link = item[0].id;
-		let left = true;
+	$('#alarmList').off('click').on('click', '.clear', function() {
+		let alarmItem = $(this).parent();
+    let link = alarmItem[0].classList[0];
+    console.log(alarmItem[0].classList[0]);
+		let isLeft = true;
 		getAlarmCnt(function(count) {
 			count--;
 			let notificationCnt = count.toString();
 			if(notificationCnt === '0') {
 				chrome.browserAction.setBadgeText({text: ''});
-				left = false;
+				isLeft = false;
 			}
 			else 
 				chrome.browserAction.setBadgeText({text: notificationCnt});
 			
 			chrome.alarms.clear(link, function(wasCleared) {
 				if(wasCleared) {
-					item.remove();
-					if(!left) 
-						$('#alarmlist_row').hide();
+					alarmItem.remove();
+					if(!isLeft) { 
+            $('#alarmBoardTopRow').hide();
+          }
 					alert("The bookmark alarm has removed successfully!");
 				}
 				else {
@@ -42,7 +44,7 @@ $(function() {
 		});
 	});
 
-	$('#alarmlist').on('click', '#alarmlist_clear_btn', function() {
+	$('#alarmBoard').on('click', '#alarmBoardClear', function() {
 		if(confirm("Are you sure clear all bookmark alarm?")) {
 			chrome.alarms.clearAll(function(wasCleared) {
 				if(wasCleared) {
@@ -52,8 +54,8 @@ $(function() {
 					alert('52:Oops! Error has occured..');
 				}
 			});
-			$('#alarmcontent').empty();
-			$('#alarmlist_row').hide();
+			$('#alarmList').empty();
+			$('#alarmBoardTopRow').hide();
 		}
 	});
 
@@ -70,21 +72,21 @@ $(function() {
 });
 
 function getBookmarkAlarms(obj) {
-	let alarmList = $('#alarmcontent_list');
+  let alarmList = $('#alarmList');
+  //User clicked set alarm button 
 	if(obj !== undefined) {
-		let title = obj.alarmtitle
-		let item = '<li id="'+removeSpecialChar(obj.alarmlink)+'" class="alarm_item">'+ title + '<span class="clear"><img src="assets/clear.png" class="option_icon_md"></span></li>'
-		$('#alarmlist_row').show();
-		$('#alarmcontent_list').append(item);
+    let title = obj.alarmTitle
+		let item = '<li id="'+removeSpecialChar(obj.alarmLink)+'" class="'+ obj.alarmLink+' alarm_item">'+ title + '<span class="clear"><img src="assets/clear.png" class="option_icon_md"></span></li>'
+		$('#alarmBoardTopRow').show();
+		$('#alarmList').append(item);
 	} else {
 		chrome.alarms.getAll(function(Alarms) {
 			for(let i = 0 ; i < Alarms.length ; i++) {
 				let link = Alarms[i].name;
 				chrome.bookmarks.search(Alarms[i].name, function(BookmarkTreeNodes) {
 					let title = BookmarkTreeNodes[0].title;
-					let item = '<li id="'+link+'" class="alarm_item">'+title + '<span class="clear"><img src="assets/clear.png" class="option_icon_md"></span></span></li>'
-					// let item = '<li id="'+link+'" class="alarm_item">'+title + " ["+link+"]"+'<span class="clear"><img src="assets/delete.png" class="option_icon_md"></span></span></li>'
-					$('#alarmcontent_list').append(item);
+					let item = '<li id="'+removeSpecialChar(link)+'" class="'+ link +' alarm_item">'+title + '<span class="clear"><img src="assets/clear.png" class="option_icon_md"></span></span></li>'
+					$('#alarmList').append(item);
 				});	
 			}
 		});
@@ -99,7 +101,7 @@ function removeSpecialChar(urlId){
 function dumpBookmarks(query) {
 	let bookmarkTreeNodes = chrome.bookmarks.getTree(
 		function(bookmarkTreeNodes) {
-			$('#bookmarks').append(dumpTreeNodes(bookmarkTreeNodes, query));
+			$('#bookmarkBoard').append(dumpTreeNodes(bookmarkTreeNodes, query));
 		});
 }
 
@@ -145,31 +147,32 @@ function dumpNode(bookmarkNode, query) {
 	//When hovered item is a folder, show add button 
 	//when it's a bookmark, show edit and delete button
 	let options = bookmarkNode.children ?
-		$('<span><span id="addlink" class="option_btn"><img src="assets/add.png" class="option_icon_lg"></span></span>') :
-		$('<span><span id="editlink" class="option_btn"><img src="assets/edit.png" class="option_icon_md"></span> ' +
-		'<span id="deletelink" class="option_btn"><img src="assets/delete.png" class="option_icon_md"></span> '+
-		'<span id="alarmlink" class="option_btn"><img src="assets/alarm.png" class="option_icon_md"></span></span>');
+		$('<span><span id="addBtn" class="option_btn"><img src="assets/add.png" class="option_icon_lg"></span></span>') :
+		$('<span><span id="editBtn" class="option_btn"><img src="assets/edit.png" class="option_icon_md"></span> ' +
+		'<span id="deleteBtn" class="option_btn"><img src="assets/delete.png" class="option_icon_md"></span> '+
+		'<span id="alarmBtn" class="option_btn"><img src="assets/alarm.png" class="option_icon_md"></span></span>');
 	
 	// let edit = bookmarkNode.children ? 
 	// 	$('<table><tr><td>Name</td><td><input id="title"></td></tr>' +
 	// 	'<tr><td>URL</td><td><input id="url"></td></tr></table>') :
 	// 	$('<input>');  
-	let alarm = $('<div class="setAlarmPanel"><input type="radio" id="test" name="alarmterm" value="0.1" checked> <label for="0.5min">test</label> ' +
+  let alarmOptions = $('<div class="setAlarmPanel">'+
+      '<input type="radio" id="test" name="alarmterm" value="0.1" checked> <label for="0.5min">test</label> ' +
 			'<input type="radio" id="5min" name="alarmterm" value="5" > <label for="5min">5min</label>' +
 			'<input type="radio" id="15min" name="alarmterm" value="15"> <label for="15min">15min</label> ' +
 			'<input type="radio" id="30min" name="alarmterm" value="30"> <label for="30min">30min</label><br> ' +
-			'<input type="submit" id="setalarm" class="btn" value="SET"></div>');
+			'<input type="submit" id="setAlarm" class="btn" value="SET"></div>');
 	
 	span.hover(function() {
 		span.append(options);
-		$('#deletelink').click(function() {
+		$('#deleteBtn').click(function() {
 			if(confirm("Are you sure want to delete this bookmark?")) {
 				chrome.bookmarks.remove(String(bookmarkNode.id));
 				span.parent().remove(); 
 			} 
 		});//end of deletelink click
 
-		$('#editlink').click(function() {
+		$('#editBtn').click(function() {
 			let title = bookmarkItem.text();
 			// let link = bookmarkItem[0].href;
 			// edit.val(title);
@@ -182,11 +185,11 @@ function dumpNode(bookmarkNode, query) {
 			}
 		});//end of editlink click
 
-		$('#alarmlink').on('click', function(event) {
+		$('#alarmBtn').on('click', function(event) {
 			let title = bookmarkItem.text();
 			let link = bookmarkItem[0].href;
-			span.append(alarm);
-			$('#setalarm').click(function() {
+			span.append(alarmOptions);
+			$('#setAlarm').click(function() {
 				chrome.alarms.get(link, function(alarm) {
 					if(alarm !== undefined) {
 						alert("The same alarm is already on you list.");
@@ -200,7 +203,7 @@ function dumpNode(bookmarkNode, query) {
 							chrome.alarms.create(link, {delayInMinutes: minutes});
 							chrome.storage.sync.set({minutes: minutes});
 							alert('You \'ll get alarmed in ' +minutes + 'min about ' + title);
-							getBookmarkAlarms({alarmtitle: title, alarmlink: link});
+							getBookmarkAlarms({alarmTitle: title, alarmLink: link});
 						});
 						chrome.storage.sync.set({[removeSpecialChar(link)]: "set"});
 					}
@@ -208,7 +211,7 @@ function dumpNode(bookmarkNode, query) {
 			});
 		});//end of alarmlink click
 
-		$('#addlink').click(function() {
+		$('#addBtn').click(function() {
 			chrome.tabs.query({currentWindow: true, active: true}, function(tabs) {
 				let currentTab = tabs[0];
 				let title = currentTab.title;
@@ -216,7 +219,7 @@ function dumpNode(bookmarkNode, query) {
 				chrome.bookmarks.create({parentId: bookmarkNode.id, title: title, url: url}, function(result) {
 					if(result.url === url && result.title === title) {
 						alert("New bookmark has added!");
-						$('#bookmarks').empty();
+						$('#bookmarkBoard').empty();
 						dumpBookmarks();
 					} else {
 						alert("222:Oops! Error has occured..");
@@ -228,7 +231,7 @@ function dumpNode(bookmarkNode, query) {
 	//unhover
 	function() {
 		options.remove();
-		alarm.remove();
+		alarmOptions.remove();
 	}).append(bookmarkItem); //end of hover
 	return li;
 }
@@ -238,5 +241,5 @@ function getAlarmCnt(callback) {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
-	dumpBookmarks();
+  dumpBookmarks();
 });

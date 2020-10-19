@@ -5,24 +5,21 @@
         <link rel="stylesheet" href="style.css">
     </head>
     <body>
-        <div class="searchbar">
+        <div id="searchBoard">
             <div class="row">
-                <input type="text" id="search" placeholder="Search Bookmarks">
+                <input type="text" id="searchBar" placeholder="Search Bookmarks">
             </div>
         </div>
-        <div id="alarmlist">
-            <div class="row_end" id="alarmlist_row">
-                <div id="alarmlist_title">Alarm List</div>
-                <div id="alarmlist_clear_btn">Clear All</div>
+        <div id="alarmBoard">
+            <div class="row_end" id="alarmBoardTopRow">
+                <div id="alarmBoardTitle">Alarm List</div>
+                <div id="alarmBoardClear">Clear All</div>
             </div>
             <div id="alarmcontent">
-                <ul id="alarmcontent_list"></ul>
+                <ul id="alarmList"></ul>
             </div>
         </div>
-        <div id="bookmarks"></div>
-        <div id="editdialog"></div>
-        <div id="deletedialog"></div>
-        <div id="adddialog"></div>
+        <div id="bookmarkBoard"></div>
         <script src="popup.js"></script>
     </body>
 </html>
