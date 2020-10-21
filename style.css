@@ -9,6 +9,28 @@ ul, li {
     list-style-type: none;
 }
 
+ul .inner {
+    /* padding-left: 1em; */
+    overflow: hidden;
+    display: none;
+}
+ul .inner.show {
+/*display: block;*/
+}
+
+ul li a.toggle {
+    width: 100%;
+    display: block;
+    background: rgba(0, 0, 0, 0.78);
+    color: #fefefe;
+    padding: .75em;
+    border-radius: 0.15em;
+    /* transition: background .3s ease; */
+}
+ul li a.toggle:hover {
+    background: rgba(0, 0, 0, 0.9);
+}
+
 .row {
     width: 100%;
     display: flex;

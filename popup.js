@@ -12,7 +12,7 @@ $(function() {
   
   //load bookmarkBoard
   dumpBookmarks();
-  
+
   //search a bookmark
 	$('#searchBar').change(function() {
 		$('#bookmarkBoard').empty();
@@ -38,7 +38,6 @@ $(function() {
 			chrome.alarms.clear(link, function(wasCleared) {
 				if(wasCleared) {
           alarmItem.remove();
-          console.log(isLeft);
 					if(!isLeft) { 
             $('#alarmBoardTopRow').hide();
           }
@@ -147,10 +146,17 @@ function dumpBookmarks(query) {
  * @return <ul element> list
  */
 function dumpTreeNodes(bookmarkTreeNodes, query) {
-	let $list = $('<ul>');
+  let $list = $('<ul>');
+  if(bookmarkTreeNodes[0].id !== '0') {
+    if(bookmarkTreeNodes[0].parentId === '0') 
+      $list.addClass('accordion');
+    else 
+      $list.addClass('inner');
+  }
 	for(let i = 0; i < bookmarkTreeNodes.length ; i++) {
-		$list.append(dumpNode(bookmarkTreeNodes[i], query));        
-	}
+    $list.append(dumpNode(bookmarkTreeNodes[i], query));        
+  }
+  
 	return $list;
 }
 
@@ -163,7 +169,7 @@ function dumpTreeNodes(bookmarkTreeNodes, query) {
  */
 function dumpNode(bookmarkNode, query) {
 	let $span = $('<span>'),
-	    $directories = $('<span class="directories">'),
+	    $directories = $('<span class="directories toggle">'),
 	    $bookmarkItem = $('<a class="bookmark_item">');
 	if(bookmarkNode.title) {
 		if(query && !bookmarkNode.children) {
@@ -175,6 +181,8 @@ function dumpNode(bookmarkNode, query) {
 
 	//When bookmark has a url, a bookmark. If not it's a title
 	if(!bookmarkNode.url) {
+    if(bookmarkNode.title === '') 
+      $directories.removeClass('toggle');
 		$directories.text(bookmarkNode.title);
 		$span.append($directories);
 	} else {
@@ -187,7 +195,7 @@ function dumpNode(bookmarkNode, query) {
 	}
 
 	let $li = $(bookmarkNode.title ? '<li>' : '<div>').append($span);
-	if(bookmarkNode.children && bookmarkNode.children.length > 0) {
+	if(bookmarkNode.children && bookmarkNode.children.length > 0 ) {
 		$li.append(dumpTreeNodes(bookmarkNode.children, query));
 	}
 
@@ -207,7 +215,7 @@ function dumpNode(bookmarkNode, query) {
 			'<input type="submit" id="setAlarm" class="btn" value="SET"></div>');
 	
 	$span.hover(function() {
-		$span.append($options);
+    $span.append($options);
 		$('#deleteBtn').click(function() {
 			if(confirm('Are you sure want to delete this bookmark?')) {
 				chrome.bookmarks.remove(String(bookmarkNode.id));
@@ -267,15 +275,32 @@ function dumpNode(bookmarkNode, query) {
 					}
 				});
 			});
-		});//end of addBtn click
+    });//end of addBtn click
+    
+    $('.toggle').off('click').on('click', function(event) {
+      // event.preventDefault();
+      // event.stopPropagation();
+      // alert('!!!');
+      let $this = $(this).parent();
+      
+      if ($this.next().hasClass('show')) { //where ul class is inner
+          $this.next().removeClass('show');
+          $this.next().slideUp(350);
+      } else {
+          $this.parent().parent().find('li .inner').removeClass('show');
+          $this.parent().parent().find('li .inner').slideUp(350);
+          $this.next().toggleClass('show');
+          $this.next().slideToggle(350);
+      }
+    });
 	}, 
 	//unhover
 	function() {
 		$options.remove();
 		$alarmOptions.remove();
   }).append($bookmarkItem); //end of hover
-  
-	return $li;
+
+  return $li;
 }
 
 /**
