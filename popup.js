@@ -1,4 +1,7 @@
 $(function() {
+   //load bookmarkBoard
+   dumpBookmarks();
+  
   //load alarmBoard
 	getAlarmCnt(function(count) {
 		if(count !== 0) {
@@ -10,12 +13,10 @@ $(function() {
 		}
   });
   
-  //load bookmarkBoard
-  dumpBookmarks();
-
   //search a bookmark
 	$('#searchBar').change(function() {
-		$('#bookmarkBoard').empty();
+    $('#bookmarkBoard').empty();
+    $('.inner').show();
 		dumpBookmarks($('#searchBar').val());
 	}); 
 
@@ -181,13 +182,13 @@ function dumpNode(bookmarkNode, query) {
 
 	//When bookmark has a url, a bookmark. If not it's a title
 	if(!bookmarkNode.url) {
-    if(bookmarkNode.title === '') 
-      $directories.removeClass('toggle');
+		if(bookmarkNode.title === '') 
+		  $directories.removeClass('toggle');
 		$directories.text(bookmarkNode.title);
 		$span.append($directories);
 	} else {
-		$bookmarkItem.attr('href', bookmarkNode.url);
-		$bookmarkItem.text(bookmarkNode.title);
+    $bookmarkItem.attr('href', bookmarkNode.url);
+    $bookmarkItem.text(bookmarkNode.title);
 		$bookmarkItem.click(function() {
 			chrome.tabs.create({url: bookmarkNode.url});
 		});
@@ -202,7 +203,7 @@ function dumpNode(bookmarkNode, query) {
 	/*When hovered item is a folder, show add button 
 	 *when it's a bookmark, show edit and delete button*/
 	let $options = bookmarkNode.children ?
-		$('<span><span id="addBtn" class="option_btn"><img src="assets/add.png" class="option_icon_lg"></span></span>') :
+		$('<span><span id="addBtn" class="option_btn"><img src="assets/add.png" class="option_icon_md"></span></span>') :
 		$('<span><span id="editBtn" class="option_btn"><img src="assets/edit.png" class="option_icon_md"></span> ' +
 		'<span id="deleteBtn" class="option_btn"><img src="assets/delete.png" class="option_icon_md"></span> '+
 		'<span id="alarmBtn" class="option_btn"><img src="assets/alarm.png" class="option_icon_md"></span></span>');
@@ -213,7 +214,7 @@ function dumpNode(bookmarkNode, query) {
 			'<input type="radio" id="15min" name="alarmterm" value="15"> <label for="15min">15min</label> ' +
 			'<input type="radio" id="30min" name="alarmterm" value="30"> <label for="30min">30min</label><br> ' +
 			'<input type="submit" id="setAlarm" class="btn" value="SET"></div>');
-	
+      
 	$span.hover(function() {
     $span.append($options);
 		$('#deleteBtn').click(function() {
@@ -276,21 +277,18 @@ function dumpNode(bookmarkNode, query) {
 				});
 			});
     });//end of addBtn click
-    
+
     $('.toggle').off('click').on('click', function(event) {
-      // event.preventDefault();
-      // event.stopPropagation();
-      // alert('!!!');
       let $this = $(this).parent();
-      
-      if ($this.next().hasClass('show')) { //where ul class is inner
-          $this.next().removeClass('show');
-          $this.next().slideUp(350);
+      console.log($this);
+      if($this.next().hasClass('show')) { //where ul class is inner
+        $this.next().removeClass('show');
+        $this.next().slideUp(500);
       } else {
-          $this.parent().parent().find('li .inner').removeClass('show');
-          $this.parent().parent().find('li .inner').slideUp(350);
-          $this.next().toggleClass('show');
-          $this.next().slideToggle(350);
+        $this.parent().parent().find('li .inner').removeClass('show');
+        $this.parent().parent().find('li .inner').slideUp(350);
+        $this.next().toggleClass('show');
+        $this.next().slideToggle();
       }
     });
 	}, 

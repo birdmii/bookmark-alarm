@@ -4,33 +4,6 @@ body {
     color: #212121;
 }
 
-ul, li {
-    padding-left: 10px;
-    list-style-type: none;
-}
-
-ul .inner {
-    /* padding-left: 1em; */
-    overflow: hidden;
-    display: none;
-}
-ul .inner.show {
-/*display: block;*/
-}
-
-ul li a.toggle {
-    width: 100%;
-    display: block;
-    background: rgba(0, 0, 0, 0.78);
-    color: #fefefe;
-    padding: .75em;
-    border-radius: 0.15em;
-    /* transition: background .3s ease; */
-}
-ul li a.toggle:hover {
-    background: rgba(0, 0, 0, 0.9);
-}
-
 .row {
     width: 100%;
     display: flex;
@@ -42,6 +15,10 @@ ul li a.toggle:hover {
     margin-top: 10px;
 }
 #searchBar {
+    background-image: url(assets/search.png);
+    background-size: contain;
+    background-repeat: no-repeat;
+    padding-left: 35px;
     width: 100%;
     height: 30px;
     border-radius: 0;
@@ -52,12 +29,6 @@ ul li a.toggle:hover {
 
 #searchBar:focus {
     outline: none !important;
-}
-
-.directories {
-    font-size: 1rem;
-    font-weight: 800;
-    background-color: #FFC107;
 }
 
 .option_icon_md {
@@ -72,7 +43,7 @@ ul li a.toggle:hover {
 
 a {
     text-decoration: none;
-    color: #000;
+    color: #212121;
 }
 
 .btn {
@@ -82,6 +53,7 @@ a {
     background-color: #212121;
     color: #fff;
 }
+
 #alarmList, #alarmList > li {
     padding: 0;
 }
@@ -94,4 +66,20 @@ a {
 #alarmBoardTitle {
     font-size: 1rem;
     font-weight: 800;
+}
+
+ul, li {
+    padding-left: 0px;
+    list-style-type: none;
+}
+
+.inner {
+    padding-left: 1em;
+    overflow: hidden;
+    display: none;
+}
+
+.directories {
+    font-weight: 800;
+    font-size: 1.2rem;
 }
