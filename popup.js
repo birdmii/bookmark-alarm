@@ -132,7 +132,7 @@ function removeSpecialChar(urlId){
  * @param <String> query
  */
 function dumpBookmarks(query) {
-	let bookmarkTreeNodes = chrome.bookmarks.getTree(
+	chrome.bookmarks.getTree(
 		function (bookmarkTreeNodes) {
       $('#bookmarkBoard').append(dumpTreeNodes(bookmarkTreeNodes, query));
     });
@@ -204,7 +204,8 @@ function dumpNode(bookmarkNode, query) {
 	 *when it's a bookmark, show alarm button*/
   let $options = bookmarkNode.children ?
 		$('<span><span id="addBtn" class="option_btn"><img src="assets/add.png" class="option_icon_md"></span></span>') :
-		$('<span id="alarmBtn" class="option_btn"><img src="assets/alarm.png" class="option_icon_md"></span></span>');
+    $('<span id="alarmBtn" class="option_btn"><img src="assets/alarm.png" class="option_icon_md"></span></span>' + 
+    '<span id="deleteBtn" class="option_btn"><img src="assets/delete.png" class="option_icon_md"></span> ');
 	
   let $alarmOptions = $('<div class="setAlarmPanel">'+
     '<div id="radioBtns">' +
@@ -261,19 +262,22 @@ function dumpNode(bookmarkNode, query) {
         });
       }); //end of addBtn click
 
+    $('#deleteBtn').click(function() {
+      if(confirm('Are you sure want to delete this bookmark?')) {
+        chrome.bookmarks.remove(String(bookmarkNode.id));
+        $span.parent().remove(); 
+      } 
+    });//end of deleteBtn click
+  
+
     $('.toggle').off('click').on('click', function () {
-      console.log('clicked');
       let $this = $(this).parent();
     
       if ($this.next().hasClass('show')) { //where ul class is inner
         $this.next().removeClass('show');
-        $this.next().slideUp();
       } else {
         $this.parent().parent().find('li .inner').removeClass('show');
-        $this.parent().parent().find('li .inner').slideUp();
         $this.next().toggleClass('show');
-        $this.next().slideToggle();
-        
       }
     });
   }, 

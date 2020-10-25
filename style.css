@@ -4,6 +4,17 @@ body {
     color: #212121;
 }
 
+a {
+    text-decoration: none;
+    color: #212121;
+    font-size: 14px;
+}
+
+ul, li {
+    padding-left: 0px;
+    list-style-type: none;
+}
+
 .row {
     width: 100%;
     display: flex;
@@ -13,6 +24,53 @@ body {
     display: flex;
     justify-content: space-between;
     margin-top: 10px;
+}
+
+.row_end__item {
+    display: none;
+}
+
+.btn {
+    width: 60%;
+    padding: 20px;
+    border-style: none;
+    background-color: #212121;
+    color: #fff;
+}
+
+.option_icon_md {
+    padding-left: 5px;
+    width: 13px;
+}
+
+.setAlarmPanel {
+    width: 100%;
+}
+
+.inner {
+    padding-left: 1em;
+    overflow: hidden;
+    display: none;
+}
+
+.directories {
+    font-weight: 800;
+    font-size: 1.2rem;
+}
+
+.show {
+    display: block !important;
+}
+
+.setAlarmPanel {
+    display: flex;
+    justify-content: space-around;
+    align-items: center
+}
+
+.alarm_item {
+    display: flex;
+    justify-content: space-between;
 }
 
 #searchBar {
@@ -32,26 +90,6 @@ body {
     outline: none !important;
 }
 
-.option_icon_md {
-    padding-left: 5px;
-    width: 13px;
-}
-
-.option_icon_lg {
-    padding-left: 5px;
-    width: 20px;
-}
-
-a {
-    text-decoration: none;
-    color: #212121;
-    font-size: 14px;
-}
-
-.setAlarmPanel {
-    width: 100%;
-}
-
 #radioBtns {
     width: 50%;
     padding-left: 30px;
@@ -64,50 +102,11 @@ a {
     justify-content: center;
 }
 
-.btn {
-    width: 60%;
-    padding: 20px;
-    border-style: none;
-    background-color: #212121;
-    color: #fff;
-}
-
 #alarmList, #alarmList > li {
     padding: 0;
-}
-
-.alarm_item {
-    display: flex;
-    justify-content: space-between;
 }
 
 #alarmBoardTitle {
     font-size: 1rem;
     font-weight: 800;
-}
-
-.setAlarmPanel {
-    display: flex;
-    justify-content: space-around;
-    align-items: center
-}
-
-ul, li {
-    padding-left: 0px;
-    list-style-type: none;
-}
-
-.inner {
-    padding-left: 1em;
-    overflow: hidden;
-    display: none;
-}
-
-.directories {
-    font-weight: 800;
-    font-size: 1.2rem;
-}
-
-.row_end__item {
-    display: none;
 }
