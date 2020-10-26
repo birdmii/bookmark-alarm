@@ -1,4 +1,4 @@
-window.addEventListener('DOMContentLoaded', (event) => {
+$(function() {
   //load alarmBoard
 	getAlarmCnt(count => {
 		if(count !== 0) {
@@ -11,7 +11,6 @@ window.addEventListener('DOMContentLoaded', (event) => {
   //search a bookmark
 	$('#searchBar').change(() => {
       $('#bookmarkBoard').empty();
-      $('.inner').show();
       dumpBookmarks($('#searchBar').val());
   }); 
 
@@ -150,8 +149,10 @@ function dumpTreeNodes(bookmarkTreeNodes, query) {
   if(bookmarkTreeNodes[0].id !== '0') {
     if(bookmarkTreeNodes[0].parentId === '0') 
       $list.addClass('accordion');
-    else 
-      $list.addClass('inner');
+    else if(query === undefined || query === '') //no query need to search
+      $list.addClass('inner-hide');
+    else //has query need to search
+      $list.addClass('inner-show');
   }
 	for(let i = 0; i < bookmarkTreeNodes.length ; i++) {
     $list.append(dumpNode(bookmarkTreeNodes[i], query));        
@@ -183,9 +184,10 @@ function dumpNode(bookmarkNode, query) {
 	if(!bookmarkNode.url) {
 		if(bookmarkNode.title === '') {
       $directories.removeClass('toggle');
+    } else {
+      $directories.text(bookmarkNode.title);
+      $span.append($directories);
     }
-		$directories.text(bookmarkNode.title);
-		$span.append($directories);
 	} else {
     $bookmarkItem.attr('href', bookmarkNode.url);
     $bookmarkItem.text(bookmarkNode.title);
@@ -209,14 +211,15 @@ function dumpNode(bookmarkNode, query) {
 	
   let $alarmOptions = $('<div class="setAlarmPanel">'+
     '<div id="radioBtns">' +
-    '<input type="radio" id="test" name="alarmterm" value="0.1" checked> <label for="0.5min">test</label> <br/>' +
-    '<input type="radio" id="5min" name="alarmterm" value="5" > <label for="5min">5min</label> <br/>' +
-    '<input type="radio" id="15min" name="alarmterm" value="15"> <label for="15min">15min</label> <br/>' +
-    '<input type="radio" id="30min" name="alarmterm" value="30"> <label for="30min">30min</label><br> ' +
+    '<input type="radio" id="15min" name="alarmterm" value="15" checked> <label for="15min">15min</label> <br/>' +
+    '<input type="radio" id="30min" name="alarmterm" value="30" > <label for="30min">30min</label> <br/>' +
+    '<input type="radio" id="1hr" name="alarmterm" value="60"> <label for="1hr">1hr</label> <br/>' +
+    '<input type="radio" id="3hrs" name="alarmterm" value="180"> <label for="3hr">3hrs</label><br> ' +
     '</div> <div id="setBtn">' +
     '<input type="submit" id="setAlarm" class="btn" value="SET"></div></div>');
       
 	$span.hover(function () {
+    $bookmarkItem.addClass('highlight');
     $span.append($options);
 
     $('#alarmBtn').off('click').on('click', function () {
@@ -276,15 +279,16 @@ function dumpNode(bookmarkNode, query) {
       if ($this.next().hasClass('show')) { //where ul class is inner
         $this.next().removeClass('show');
       } else {
-        $this.parent().parent().find('li .inner').removeClass('show');
+        $this.parent().parent().find('li .inner-hide').removeClass('show');
         $this.next().toggleClass('show');
       }
-    });
+    });//end of toggle click
   }, 
 	//unhover
 	function() {
 		$options.remove();
-		$alarmOptions.remove();
+    $alarmOptions.remove();
+    $bookmarkItem.removeClass('highlight');
   }).append($bookmarkItem); //end of hover
 
   return $li;

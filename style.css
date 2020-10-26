@@ -1,5 +1,5 @@
 body {
-    width: 400px;
+    width: 500px;
     margin: 20px 20px 30px 20px;
     color: #212121;
 }
@@ -47,15 +47,22 @@ ul, li {
     width: 100%;
 }
 
-.inner {
-    padding-left: 1em;
+.inner-hide {
+    padding-left: 1.2em;
     overflow: hidden;
     display: none;
+}
+
+.inner-show {
+    padding-left: 1.2em;
+    overflow: hidden;
+    display: block;
 }
 
 .directories {
     font-weight: 800;
     font-size: 1.2rem;
+    background-color: #ffc701;
 }
 
 .show {
@@ -71,6 +78,10 @@ ul, li {
 .alarm_item {
     display: flex;
     justify-content: space-between;
+}
+
+.highlight {
+    background-color: #B2DFDB;
 }
 
 #searchBar {
