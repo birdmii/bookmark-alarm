@@ -81,38 +81,42 @@ $(function() {
  * getBookmarkAlarms() returns an <ul> list
  * which is an user added bookmark alarm list
  *
- * @param <{alarmTitle: title, alarmLink: link}> obj
  * @return <ul Element> alarmList
  */
-function getBookmarkAlarms(obj) {
+function getBookmarkAlarms() {
   let $alarmList = $('#alarmList');
   //User clicked set alarm button 
-	if(obj !== undefined) {
-    let title = obj.alarmTitle,
-        item = '<li id="'+removeSpecialChar(obj.alarmLink)+'" class="'+ obj.alarmLink+' alarm_item">'
-                + title 
-                + '<span class="clear"><img src="assets/clear.png" class="option_icon_md"></span>'
-                +'</li>'
-    $('.row_end__item').show();
-		$alarmList.append(item);
-	} else {
-		chrome.alarms.getAll((Alarms) => {
-        for (let i = 0; i < Alarms.length; i++) {
-          let link = Alarms[i].name;
-          chrome.bookmarks.search(Alarms[i].name, (BookmarkTreeNodes) => {
-            let title = BookmarkTreeNodes[0].title,
-              item = '<li id="' + removeSpecialChar(link) + '" class="' + link + ' alarm_item">'
-                + title
-                + '<span class="clear"><img src="assets/clear.png" class="option_icon_md"></span>'
-                + '</li>';
-            $alarmList.append(item);
-          });
-        }
-      });
+  chrome.alarms.getAll((Alarms) => {
+      for (let i = 0; i < Alarms.length; i++) {
+        let link = Alarms[i].name;
+        chrome.bookmarks.search(Alarms[i].name, (BookmarkTreeNodes) => {
+          let title = BookmarkTreeNodes[0].title,
+            item = '<li id="' + removeSpecialChar(link) + '" class="' + link + ' alarm_item">'
+              + title
+              + '<span class="clear"><img src="assets/clear.png" class="option_icon_md"></span>'
+              + '</li>';
+          $alarmList.append(item);
+        });
+      }
+    });
+    return $alarmList;
 	}
-	return $alarmList;
-}
 
+/**
+ * setBookmarkAlarms() adds new bookmark alarm item
+ * 
+ * @param {alarmTitle: title, alarmLink: link} obj 
+ */
+function setBookmarkAlarms(obj) {
+  let $alarmList = $('#alarmList');
+  let title = obj.alarmTitle,
+      item = '<li id="'+removeSpecialChar(obj.alarmLink)+'" class="'+ obj.alarmLink+' alarm_item">'
+              + title 
+              + '<span class="clear"><img src="assets/clear.png" class="option_icon_md"></span>'
+              +'</li>'
+  $('.row_end__item').show();
+  $alarmList.append(item);
+}
 /**
  * removeSpecialChar() returns a string
  * removed all special characters
@@ -205,7 +209,7 @@ function dumpNode(bookmarkNode, query) {
 	/*When hovered item is a folder, show add button 
 	 *when it's a bookmark, show alarm button*/
   let $options = bookmarkNode.children ?
-		$('<span><span id="addBtn" class="option_btn"><img src="assets/add.png" class="option_icon_md"></span></span>') :
+		$('<span><span id="addBtn" class="option_btn"><img src="assets/add.png" class="option_icon_lg"></span></span>') :
     $('<span id="alarmBtn" class="option_btn"><img src="assets/alarm.png" class="option_icon_md"></span></span>' + 
     '<span id="deleteBtn" class="option_btn"><img src="assets/delete.png" class="option_icon_md"></span> ');
 	
@@ -239,8 +243,8 @@ function dumpNode(bookmarkNode, query) {
                 chrome.browserAction.setBadgeText({ text: notificationCnt });
                 chrome.alarms.create(link, { delayInMinutes: minutes });
                 chrome.storage.sync.set({ minutes: minutes });
-                alert('You \'ll get alarmed in ' + minutes + 'min about ' + title);
-                getBookmarkAlarms({ alarmTitle: title, alarmLink: link });
+                alert(`You 'll get alarmed in ${minutes}min about ${title}`);
+                setBookmarkAlarms({ alarmTitle: title, alarmLink: link });
               });
               chrome.storage.sync.set({ [removeSpecialChar(link)]: 'set' });
             }
