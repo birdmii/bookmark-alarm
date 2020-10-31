@@ -36,10 +36,10 @@ $(function() {
           if (!isLeft) {
             $('.row_end__item').hide();
           }
-          alert('The bookmark alarm has removed successfully!');
+          showAlert('success','The bookmark alarm has removed successfully!')
         }
         else {
-          alert('44:Oops! Error has occured..');
+          showAlert('fail', '42:Oops! Error has occured..');
         }
       });
 		});
@@ -50,10 +50,10 @@ $(function() {
 		if(confirm('Are you sure clear all bookmark alarm?')) {
 			chrome.alarms.clearAll((wasCleared) => {
           if (wasCleared) {
-            // alert('All bookmark alarm is cleared!');
+            showAlert('success', 'All bookmark alarm is cleared!');
             chrome.browserAction.setBadgeText({ text: '' });
           } else {
-            alert('57:Oops! Error has occured..');
+            showAlert('fail', '56:Oops! Error has occured..');
           }
         });
 			$('#alarmList').empty();
@@ -81,7 +81,7 @@ $(function() {
  * getBookmarkAlarms() returns an <ul> list
  * which is an user added bookmark alarm list
  *
- * @return <ul Element> alarmList
+ * @return {ul Element} alarmList
  */
 function getBookmarkAlarms() {
   let $alarmList = $('#alarmList');
@@ -121,8 +121,8 @@ function setBookmarkAlarms(obj) {
  * removeSpecialChar() returns a string
  * removed all special characters
  *
- * @param <String> urlId
- * @return <String> 
+ * @param {String} urlId
+ * @return {String}
  */
 function removeSpecialChar(urlId){
     return urlId.replace(/[^\w\s]/gi, '');
@@ -132,7 +132,7 @@ function removeSpecialChar(urlId){
  * dumpBookmarks() calls dumpTreeNodes
  * and get ul list be composed of bookmark items
  *
- * @param <String> query
+ * @param {String} query
  */
 function dumpBookmarks(query) {
 	chrome.bookmarks.getTree(
@@ -145,8 +145,8 @@ function dumpBookmarks(query) {
  * dumpTreeNodes() calls dumpNode 
  * and get li element which is bookmark item or directory name
  * 
- * @param <String> query
- * @return <ul element> list
+ * @param {String} query
+ * @return {ul element} list
  */
 function dumpTreeNodes(bookmarkTreeNodes, query) {
   let $list = $('<ul>');
@@ -168,9 +168,9 @@ function dumpTreeNodes(bookmarkTreeNodes, query) {
 /**
  * dumpNode() returns a bookmark item or a directory
  *
- * @param <ul element> bookmarkNode
- * @param <String> query
- * @return <li element> li
+ * @param {ul element} bookmarkNode
+ * @param {String} query
+ * @return {li element} li
  */
 function dumpNode(bookmarkNode, query) {
 	let $span = $('<span>'),
@@ -233,7 +233,7 @@ function dumpNode(bookmarkNode, query) {
         $('#setAlarm').click(() => {
           chrome.alarms.get(link, (alarm) => {
             if (alarm !== undefined) {
-              alert('The same alarm is already on you list.');
+              showAlert('warning', 'The same alarm is already on you list.');
             } else {
               getAlarmCnt((count) => {
                 count++;
@@ -243,7 +243,7 @@ function dumpNode(bookmarkNode, query) {
                 chrome.browserAction.setBadgeText({ text: notificationCnt });
                 chrome.alarms.create(link, { delayInMinutes: minutes });
                 chrome.storage.sync.set({ minutes: minutes });
-                alert(`You 'll get alarmed in ${minutes}min about ${title}`);
+                showAlert('success', `You 'll get alarmed in ${minutes}min about ${title}`);
                 setBookmarkAlarms({ alarmTitle: title, alarmLink: link });
               });
               chrome.storage.sync.set({ [removeSpecialChar(link)]: 'set' });
@@ -259,11 +259,11 @@ function dumpNode(bookmarkNode, query) {
             url = currentTab.url;
           chrome.bookmarks.create({ parentId: bookmarkNode.id, title: title, url: url }, function (result) {
             if (result.url === url && result.title === title) {
-              alert('New bookmark has added!');
+              showAlert('success', 'New bookmark has added!');
               $('#bookmarkBoard').empty();
               dumpBookmarks();
             } else {
-              alert('268:Oops! Error has occured..');
+              showAlert('fail', '268:Oops! Error has occured..');
             }
           });
         });
@@ -271,6 +271,7 @@ function dumpNode(bookmarkNode, query) {
 
     $('#deleteBtn').click(function() {
       if(confirm('Are you sure want to delete this bookmark?')) {
+        showAlert('success', 'Bookmark has deleted!');
         chrome.bookmarks.remove(String(bookmarkNode.id));
         $span.parent().remove(); 
       } 
@@ -302,8 +303,25 @@ function dumpNode(bookmarkNode, query) {
  * getAlarmCnt() is a callback function
  * to get all alarms
  *
- * @param <function> callback
+ * @param {function} callback
  */
 function getAlarmCnt(callback) {
     chrome.alarms.getAll(alarms => {callback(alarms.length) }); 
+}
+
+/**
+ * showAlert() shows result of user's action 
+ * on the top of the page
+ * 
+ * @param {String} className 
+ * @param {String} message 
+ */
+function showAlert(className, message) {
+  let $messageContainer = $(`<div class="alert alert-${className}">
+                              ${message}
+                            </div>`);
+  let $searchBoard = $('#searchBoard');
+  $messageContainer.insertBefore($searchBoard);
+
+  setTimeout(() => $('.alert').remove(), 1500);
 }
