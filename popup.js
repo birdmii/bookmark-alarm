@@ -3,7 +3,7 @@ $(function() {
 	getAlarmCnt(count => {
 		if(count !== 0) {
 			$('.row_end__item').show();
-			let alarmList = getBookmarkAlarms();
+			const alarmList = getBookmarkAlarms();
 			$('#alarmcontent').append(alarmList);
     } 
   });
@@ -16,13 +16,13 @@ $(function() {
 
   //clear an alarm
 	$('#alarmList').off('click').on('click', '.clear', function(){
-		let alarmItem = $(this).parent(),
-        link = alarmItem[0].classList[0],
-        isLeft = true;
+		const alarmItem = $(this).parent(),
+          link = alarmItem[0].classList[0];
+    let isLeft = true;
         
 		getAlarmCnt(count => {
       count === 0 ? 0: count--;
-			let notificationCnt = count.toString();
+			const notificationCnt = count.toString();
 			if(notificationCnt === '0') {
 				chrome.browserAction.setBadgeText({text: ''});
 				isLeft = false;
@@ -65,16 +65,13 @@ $(function() {
       for (key in changes) {
         chrome.storage.sync.get(key, (result) => {
           if (result[key] === 'fired') {
-            let item = $('#' + removeSpecialChar(key));
+            const item = $('#' + removeSpecialChar(key));
             item.remove();
             $('.row_end__item').hide();
           }
         });
       }
   }); 
-
-  //load bookmarkBoard
-  dumpBookmarks();
 }); //end of document.ready()
 
 /**
@@ -88,9 +85,9 @@ function getBookmarkAlarms() {
   //User clicked set alarm button 
   chrome.alarms.getAll((Alarms) => {
       for (let i = 0; i < Alarms.length; i++) {
-        let link = Alarms[i].name;
+        const link = Alarms[i].name;
         chrome.bookmarks.search(Alarms[i].name, (BookmarkTreeNodes) => {
-          let title = BookmarkTreeNodes[0].title,
+          const title = BookmarkTreeNodes[0].title,
             item = '<li id="' + removeSpecialChar(link) + '" class="' + link + ' alarm_item">'
               + title
               + '<span class="clear"><img src="assets/clear.png" class="option_icon_md"></span>'
@@ -109,7 +106,7 @@ function getBookmarkAlarms() {
  */
 function setBookmarkAlarms(obj) {
   let $alarmList = $('#alarmList');
-  let title = obj.alarmTitle,
+  const title = obj.alarmTitle,
       item = '<li id="'+removeSpecialChar(obj.alarmLink)+'" class="'+ obj.alarmLink+' alarm_item">'
               + title 
               + '<span class="clear"><img src="assets/clear.png" class="option_icon_md"></span>'
@@ -135,7 +132,7 @@ function removeSpecialChar(urlId){
  * @param {String} query
  */
 function dumpBookmarks(query) {
-	chrome.bookmarks.getTree(
+	chrome.bookmarks.getTree(  
 		function (bookmarkTreeNodes) {
       $('#bookmarkBoard').append(dumpTreeNodes(bookmarkTreeNodes, query));
     });
@@ -222,13 +219,14 @@ function dumpNode(bookmarkNode, query) {
     '</div> <div id="setBtn">' +
     '<input type="submit" id="setAlarm" class="btn" value="SET"></div></div>');
       
-	$span.hover(function () {
+	// $span.hover(function () {
+  $span.on('mouseenter', function() {
     $bookmarkItem.addClass('highlight');
     $span.append($options);
 
     $('#alarmBtn').off('click').on('click', function () {
-        let title = $bookmarkItem.text(),
-          link = $bookmarkItem[0].href;
+        const title = $bookmarkItem.text(),
+              link = $bookmarkItem[0].href;
         $span.append($alarmOptions);
         $('#setAlarm').click(() => {
           chrome.alarms.get(link, (alarm) => {
@@ -237,12 +235,12 @@ function dumpNode(bookmarkNode, query) {
             } else {
               getAlarmCnt((count) => {
                 count++;
-                let notificationCnt = count.toString(),
+                const notificationCnt = count.toString(),
                   alarmTerm = $('input[name=alarmterm]:checked').val(),
                   minutes = parseFloat(alarmTerm);
                 chrome.browserAction.setBadgeText({ text: notificationCnt });
                 chrome.alarms.create(link, { delayInMinutes: minutes });
-                chrome.storage.sync.set({ minutes: minutes });
+                // chrome.storage.sync.set({ minutes: minutes });
                 showAlert('success', `You 'll get alarmed in ${minutes}min about ${title}`);
                 setBookmarkAlarms({ alarmTitle: title, alarmLink: link });
               });
@@ -254,9 +252,9 @@ function dumpNode(bookmarkNode, query) {
 
     $('#addBtn').off('click').on('click', function () {
         chrome.tabs.query({ currentWindow: true, active: true }, function (tabs) {
-          let currentTab = tabs[0],
-            title = currentTab.title,
-            url = currentTab.url;
+          const currentTab = tabs[0],
+                title = currentTab.title,
+                url = currentTab.url;
           chrome.bookmarks.create({ parentId: bookmarkNode.id, title: title, url: url }, function (result) {
             if (result.url === url && result.title === title) {
               showAlert('success', 'New bookmark has added!');
@@ -288,13 +286,14 @@ function dumpNode(bookmarkNode, query) {
         $this.next().toggleClass('show');
       }
     });//end of toggle click
-  }, 
+  }).append($bookmarkItem); //end of hover
+
 	//unhover
-	function() {
+	$span.on('mouseleave', function() {
 		$options.remove();
     $alarmOptions.remove();
     $bookmarkItem.removeClass('highlight');
-  }).append($bookmarkItem); //end of hover
+  }).append($bookmarkItem); //end of hover;
 
   return $li;
 }
@@ -306,7 +305,7 @@ function dumpNode(bookmarkNode, query) {
  * @param {function} callback
  */
 function getAlarmCnt(callback) {
-    chrome.alarms.getAll(alarms => {callback(alarms.length) }); 
+  chrome.alarms.getAll(alarms => {callback(alarms.length) }); 
 }
 
 /**
@@ -316,12 +315,17 @@ function getAlarmCnt(callback) {
  * @param {String} className 
  * @param {String} message 
  */
-function showAlert(className, message) {
-  let $messageContainer = $(`<div class="alert alert-${className}">
+function showAlert (className, message) {
+  const $messageContainer = $(`<div class="alert alert-${className}">
                               ${message}
                             </div>`);
-  let $searchBoard = $('#searchBoard');
+  const $searchBoard = $('#searchBoard');
   $messageContainer.insertBefore($searchBoard);
 
   setTimeout(() => $('.alert').remove(), 1500);
-}
+};
+
+window.addEventListener('DOMContentLoaded', (event) => {
+  //load bookmarkBoard
+  dumpBookmarks();
+});

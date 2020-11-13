@@ -103,22 +103,24 @@ li {
 .alert {
     padding: 10px;
     margin-bottom: 10px;
-    border-radius: 5px;
+    border-radius: 3px;
+    border: 1px solid #000;
 }
 
 .alert-success {
     background-color: #C8E6C9;
-    border: 1px solid #388E3C;
+    /* border: 1px solid #388E3C; */
 }
 
 .alert-warning {
     background-color: #FFECB3;
-    border: 1px solid #FFA000;
+    /* border: 1px solid #FFA000; */
+
 }
 
 .alert-fail {
     background-color: #FFCDD2;
-    border: 1px solid #D32F2F;
+    /* border: 1px solid #D32F2F; */
 }
 
 #searchBar {
