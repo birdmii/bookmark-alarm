@@ -286,14 +286,14 @@ function dumpNode(bookmarkNode, query) {
         $this.next().toggleClass('show');
       }
     });//end of toggle click
-  }).append($bookmarkItem); //end of hover
+  }); //end of hover
 
 	//unhover
 	$span.on('mouseleave', function() {
 		$options.remove();
     $alarmOptions.remove();
     $bookmarkItem.removeClass('highlight');
-  }).append($bookmarkItem); //end of hover;
+  }); //end of hover;
 
   return $li;
 }
