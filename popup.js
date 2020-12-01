@@ -1,16 +1,36 @@
-$(function () {
+window.addEventListener('DOMContentLoaded', (event) => {
+  //load bookmarkBoard
+  dumpBookmarks();
+
+  //load alarmBoard
+  getAlarmCnt((count) => {
+    if (count !== 0) {
+      document.querySelectorAll('.row_end__item').forEach((item) => {
+        item.style.display = 'block';
+      });
+      const alarmList = getBookmarkAlarms();
+      // FIXME: Object is also show on display
+      document.getElementById('alarmcontent').append(alarmList);
+    }
+  });
+
   //search a bookmark
-  $('#searchBar').change(() => {
-    $('#bookmarkBoard').empty();
-    dumpBookmarks($('#searchBar').val());
+  const searchBar = document.getElementById('searchBar');
+  searchBar.addEventListener('change', (event) => {
+    const bookmarkBoard = document.getElementById('bookmarkBoard');
+    //empty
+    while (bookmarkBoard.firstChild) {
+      bookmarkBoard.removeChild(bookmarkBoard.lastChild);
+    }
+    dumpBookmarks(searchBar.value);
   });
 
   //clear an alarm
-  $('#alarmList')
-    .off('click')
-    .on('click', '.clear', function () {
-      const alarmItem = $(this).parent(),
-        link = alarmItem[0].classList[0];
+  const alarmItems = document.getElementById('alarmList');
+  alarmItems.addEventListener('click', (event) => {
+    if (event.target && event.target.matches('img')) {
+      const alarmItem = event.target.parentElement.parentElement;
+      const link = alarmItem.classList[0];
       let isLeft = true;
 
       getAlarmCnt((count) => {
@@ -25,7 +45,9 @@ $(function () {
           if (wasCleared) {
             alarmItem.remove();
             if (!isLeft) {
-              $('.row_end__item').hide();
+              document.querySelectorAll('.row_end__item').forEach((item) => {
+                item.style.display = 'none';
+              });
             }
             showAlert(
               'success',
@@ -36,7 +58,8 @@ $(function () {
           }
         });
       });
-    });
+    }
+  });
 
   //clear all alarm
   $('#alarmBoard').on('click', '#alarmBoardClear', () => {
@@ -65,7 +88,7 @@ $(function () {
       });
     }
   });
-}); //end of document.ready()
+});
 
 /**
  * getBookmarkAlarms() returns an <ul> list
@@ -74,23 +97,21 @@ $(function () {
  * @return {ul Element} alarmList
  */
 function getBookmarkAlarms() {
-  let $alarmList = $('#alarmList');
+  let $alarmList = document.getElementById('alarmList'); 
+
   //User clicked set alarm button
   chrome.alarms.getAll((Alarms) => {
     for (let i = 0; i < Alarms.length; i++) {
       const link = Alarms[i].name;
       chrome.bookmarks.search(Alarms[i].name, (BookmarkTreeNodes) => {
         const title = BookmarkTreeNodes[0].title,
-          item =
-            '<li id="' +
-            removeSpecialChar(link) +
-            '" class="' +
-            link +
-            ' alarm_item">' +
-            title +
-            '<span class="clear"><img src="assets/clear.png" class="option_icon_md"></span>' +
-            '</li>';
-        $alarmList.append(item);
+              $item = document.createElement('li');
+
+        $item.id = removeSpecialChar(link);
+        $item.classList.add(`${link}`, 'alarm_item');
+        $item.innerHTML = title + '<span class="clear"><img src="assets/clear.png" class="option_icon_md"></span>';
+
+        $alarmList.append($item);
       });
     }
   });
@@ -135,7 +156,7 @@ function removeSpecialChar(urlId) {
  * @param {String} query
  */
 async function dumpBookmarks(query) {
-  await chrome.bookmarks.getTree(function (bookmarkTreeNodes) {
+  chrome.bookmarks.getTree(function (bookmarkTreeNodes) {
     $('#bookmarkBoard').append(dumpTreeNodes(bookmarkTreeNodes, query));
   });
 }
@@ -240,7 +261,7 @@ function dumpNode(bookmarkNode, query) {
       .off('click')
       .on('click', function () {
         const title = $bookmarkItem.text(),
-              link = $bookmarkItem[0].href;
+          link = $bookmarkItem[0].href;
         $span.append($alarmOptions);
         $('#setAlarm').click(() => {
           chrome.alarms.get(link, (alarm) => {
@@ -347,25 +368,13 @@ function getAlarmCnt(callback) {
  * @param {String} message
  */
 function showAlert(className, message) {
-  const $messageContainer = $(`<div class="alert alert-${className}">
-                              ${message}
-                            </div>`);
-  const $searchBoard = $('#searchBoard');
-  $messageContainer.insertBefore($searchBoard);
+  const $messageContainer = document.createElement('div');
+  $messageContainer.classList.add('alert', `alert-${className}`);
+  const $message = document.createTextNode(`${message}`);
+  $messageContainer.appendChild($message);
 
-  setTimeout(() => $('.alert').remove(), 1500);
+  const $searchBoard = document.getElementById('searchBoard');
+  $searchBoard.before($messageContainer);
+
+  setTimeout(() => document.querySelector('.alert').remove(), 1500);
 }
-
-window.addEventListener('DOMContentLoaded', (event) => {
-  //load bookmarkBoard
-  dumpBookmarks();
-
-  //load alarmBoard
-  getAlarmCnt((count) => {
-    if (count !== 0) {
-      $('.row_end__item').show();
-      const alarmList = getBookmarkAlarms();
-      $('#alarmcontent').append(alarmList);
-    }
-  });
-});
