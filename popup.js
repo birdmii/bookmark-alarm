@@ -5,11 +5,8 @@ window.addEventListener('DOMContentLoaded', (event) => {
   //load alarmBoard
   getAlarmCnt((count) => {
     if (count !== 0) {
-      document.querySelectorAll('.row_end__item').forEach((item) => {
-        item.style.display = 'block';
-      });
+      toggleAlarmBoardTitle(true);
       const alarmList = getBookmarkAlarms();
-      // FIXME: Object is also show on display
       document.getElementById('alarmcontent').append(alarmList);
     }
   });
@@ -17,11 +14,7 @@ window.addEventListener('DOMContentLoaded', (event) => {
   //search a bookmark
   const searchBar = document.getElementById('searchBar');
   searchBar.addEventListener('change', (event) => {
-    const bookmarkBoard = document.getElementById('bookmarkBoard');
-    //empty
-    while (bookmarkBoard.firstChild) {
-      bookmarkBoard.removeChild(bookmarkBoard.lastChild);
-    }
+    emptyObj('bookmarkBoard');
     dumpBookmarks(searchBar.value);
   });
 
@@ -45,9 +38,7 @@ window.addEventListener('DOMContentLoaded', (event) => {
           if (wasCleared) {
             alarmItem.remove();
             if (!isLeft) {
-              document.querySelectorAll('.row_end__item').forEach((item) => {
-                item.style.display = 'none';
-              });
+              toggleAlarmBoardTitle(false);
             }
             showAlert(
               'success',
@@ -62,26 +53,29 @@ window.addEventListener('DOMContentLoaded', (event) => {
   });
 
   //clear all alarm
-  $('#alarmBoard').on('click', '#alarmBoardClear', () => {
-    if (confirm('Are you sure clear all bookmark alarm?')) {
-      chrome.alarms.clearAll((wasCleared) => {
-        if (wasCleared) {
-          showAlert('success', 'All bookmark alarm is cleared!');
-          chrome.browserAction.setBadgeText({ text: '' });
-        } else {
-          showAlert('fail', '56:Oops! Error has occured..');
-        }
-      });
-      $('#alarmList').empty();
-      $('.row_end__item').hide();
-    }
-  });
+  const $alarmBoardClear = document.getElementById('alarmBoardClear');
+  if ($alarmBoardClear) {
+    $alarmBoardClear.addEventListener('click', (event) => {
+      if (confirm('Are you sure clear all bookmark alarm?')) {
+        chrome.alarms.clearAll((wasCleared) => {
+          if (wasCleared) {
+            showAlert('success', 'All bookmark alarm is cleared!');
+            chrome.browserAction.setBadgeText({ text: '' });
+          } else {
+            showAlert('fail', '56:Oops! Error has occured..');
+          }
+        });
+        emptyObj('alarmList');
+        toggleAlarmBoardTitle(false);
+      }
+    });
+  }
 
   chrome.storage.onChanged.addListener((changes, namespace) => {
     for (key in changes) {
       chrome.storage.sync.get(key, (result) => {
         if (result[key] === 'fired') {
-          const item = $('#' + removeSpecialChar(key));
+          let item = $('#' + removeSpecialChar(key));
           item.remove();
           $('.row_end__item').hide();
         }
@@ -97,7 +91,7 @@ window.addEventListener('DOMContentLoaded', (event) => {
  * @return {ul Element} alarmList
  */
 function getBookmarkAlarms() {
-  let $alarmList = document.getElementById('alarmList'); 
+  let $alarmList = document.getElementById('alarmList');
 
   //User clicked set alarm button
   chrome.alarms.getAll((Alarms) => {
@@ -105,12 +99,7 @@ function getBookmarkAlarms() {
       const link = Alarms[i].name;
       chrome.bookmarks.search(Alarms[i].name, (BookmarkTreeNodes) => {
         const title = BookmarkTreeNodes[0].title,
-              $item = document.createElement('li');
-
-        $item.id = removeSpecialChar(link);
-        $item.classList.add(`${link}`, 'alarm_item');
-        $item.innerHTML = title + '<span class="clear"><img src="assets/clear.png" class="option_icon_md"></span>';
-
+          $item = createAlarmItem(link, title);
         $alarmList.append($item);
       });
     }
@@ -124,19 +113,38 @@ function getBookmarkAlarms() {
  * @param {alarmTitle: title, alarmLink: link} obj
  */
 function setBookmarkAlarms(obj) {
-  let $alarmList = $('#alarmList');
-  const title = obj.alarmTitle,
-    item =
-      '<li id="' +
-      removeSpecialChar(obj.alarmLink) +
-      '" class="' +
-      obj.alarmLink +
-      ' alarm_item">' +
-      title +
-      '<span class="clear"><img src="assets/clear.png" class="option_icon_md"></span>' +
-      '</li>';
-  $('.row_end__item').show();
-  $alarmList.append(item);
+  let $alarmList = document.getElementById('alarmList');
+  let $item = createAlarmItem(obj.alarmLink, obj.alarmTitle);
+
+  toggleAlarmBoardTitle(true);
+  $alarmList.append($item);
+}
+
+/**
+ * Creates an alarm item
+ * @param {String} link
+ * @param {String} title
+ * @return {li object}
+ */
+function createAlarmItem(link, title) {
+  let $item = document.createElement('li');
+  $item.id = removeSpecialChar(link);
+  $item.classList.add(`${link}`, 'alarm_item');
+  $item.innerHTML =
+    title +
+    '<span class="clear"><img src="assets/clear.png" class="option_icon_md"></span>';
+
+  return $item;
+}
+
+/**
+ * toggle display value(block <-> none) of .row_end__item class
+ * @param {boolean} isShow
+ */
+function toggleAlarmBoardTitle(isShow) {
+  document.querySelectorAll('.row_end__item').forEach((item) => {
+    item.style.display = isShow ? 'block' : 'none';
+  });
 }
 /**
  * removeSpecialChar() returns a string
@@ -150,6 +158,18 @@ function removeSpecialChar(urlId) {
 }
 
 /**
+ * Get element id and remove empty the element
+ * @param {String} el
+ */
+function emptyObj(el) {
+  const element = document.getElementById(el);
+  //empty
+  while (element.firstChild) {
+    element.removeChild(element.lastChild);
+  }
+}
+
+/**
  * dumpBookmarks() calls dumpTreeNodes
  * and get ul list be composed of bookmark items
  *
@@ -157,7 +177,8 @@ function removeSpecialChar(urlId) {
  */
 async function dumpBookmarks(query) {
   chrome.bookmarks.getTree(function (bookmarkTreeNodes) {
-    $('#bookmarkBoard').append(dumpTreeNodes(bookmarkTreeNodes, query));
+    let $bookmarkBoard = document.getElementById('bookmarkBoard');
+    $bookmarkBoard.append(dumpTreeNodes(bookmarkTreeNodes, query));
   });
 }
 
@@ -169,15 +190,16 @@ async function dumpBookmarks(query) {
  * @return {ul element} list
  */
 function dumpTreeNodes(bookmarkTreeNodes, query) {
-  let $list = $('<ul>');
+  let $list = document.createElement('ul');
   if (bookmarkTreeNodes[0].id !== '0') {
-    if (bookmarkTreeNodes[0].parentId === '0') $list.addClass('accordion');
+    if (bookmarkTreeNodes[0].parentId === '0') $list.classList.add('accordion');
     else if (query === undefined || query === '')
       //no query need to search
-      $list.addClass('inner-hide');
+      $list.classList.add('inner-hide');
     //has query need to search
-    else $list.addClass('inner-show');
+    else $list.classList.add('inner-show');
   }
+  //CHECKOUT
   for (let i = 0; i < bookmarkTreeNodes.length; i++) {
     $list.append(dumpNode(bookmarkTreeNodes[i], query));
   }
@@ -193,13 +215,19 @@ function dumpTreeNodes(bookmarkTreeNodes, query) {
  * @return {li element} li
  */
 function dumpNode(bookmarkNode, query) {
-  let $span = $('<span class="item">'),
-    $directories = $('<span class="directories toggle">'),
-    $bookmarkItem = $('<a class="bookmark_item">');
+  let $span = document.createElement('span');
+  $span.classList.add('item');
+
+  let $directories = document.createElement('span');
+  $directories.classList.add('directories', 'toggle');
+
+  let $bookmarkItem = document.createElement('a');
+  $bookmarkItem.classList.add('bookmark_item');
+
   if (bookmarkNode.title) {
     if (query && !bookmarkNode.children) {
       if (String(bookmarkNode.title).indexOf(query) == -1) {
-        return $('<span></span>');
+        return document.createElement('span');
       }
     }
   }
@@ -207,63 +235,94 @@ function dumpNode(bookmarkNode, query) {
   //When bookmark has a url, a bookmark. If not it's a title
   if (!bookmarkNode.url) {
     if (bookmarkNode.title === '') {
-      $directories.removeClass('toggle');
+      $directories.classList.remove('toggle');
     } else {
-      $directories.text(bookmarkNode.title);
+      $directories.innerText = bookmarkNode.title;
       $span.append($directories);
     }
   } else {
-    $bookmarkItem.attr('href', bookmarkNode.url);
-    $bookmarkItem.text(bookmarkNode.title);
-    $bookmarkItem.off('click').on('click', function () {
+    $bookmarkItem.setAttribute('href', bookmarkNode.url);
+    $bookmarkItem.innerText = bookmarkNode.title;
+
+    $bookmarkItem.addEventListener('click', (event) => {
       chrome.tabs.create({ url: bookmarkNode.url });
     });
     $span.append($bookmarkItem);
   }
 
-  let $li = $(bookmarkNode.title ? '<li>' : '<div>').append($span);
+  let $li = bookmarkNode.title
+    ? document.createElement('li')
+    : document.createElement('div');
+  $li.append($span);
   if (bookmarkNode.children && bookmarkNode.children.length > 0) {
     $li.append(dumpTreeNodes(bookmarkNode.children, query));
   }
 
   /*When hovered item is a folder, show add button
    *when it's a bookmark, show alarm button*/
-  let $options = bookmarkNode.children
-    ? $(
-        '<span><span id="addBtn" class="option_btn"><img src="assets/add.png" class="option_icon_lg"></span></span>',
-      )
-    : $(
-        '<span id="alarmBtn" class="option_btn"><img src="assets/alarm.png" class="option_icon_md"></span></span>' +
-          '<span id="deleteBtn" class="option_btn"><img src="assets/delete.png" class="option_icon_md"></span> ',
-      );
+  let $options = document.createElement('div');
+  if (bookmarkNode.children) {
+    $options = document.createElement('span');
+    $options.innerHTML =
+      '<span id="addBtn" class="option_btn"><img src="assets/add.png" class="option_icon_lg"></span>';
+  } else {
+    // $option = document.createElement('div');
+    //create alarmBtn
+    let $alarmBtn = document.createElement('span');
+    $alarmBtn.id = 'alarmBtn';
+    $alarmBtn.classList.add('option_btn');
+    $alarmBtn.innerHTML = '<img src="assets/alarm.png" class="option_icon_lg">';
 
-  let $alarmOptions = $(
-    '<div class="setAlarmPanel">' +
-      '<div id="radioBtns">' +
-      '<input type="radio" id="15min" name="alarmterm" value="15" checked> <label for="15min">15min</label> <br/>' +
-      '<input type="radio" id="30min" name="alarmterm" value="30" > <label for="30min">30min</label> <br/>' +
-      '<input type="radio" id="1hr" name="alarmterm" value="60"> <label for="1hr">1hr</label> <br/>' +
-      '<input type="radio" id="3hrs" name="alarmterm" value="180"> <label for="3hr">3hrs</label><br> ' +
-      '</div> <div id="setBtn">' +
-      '<input type="submit" id="setAlarm" class="btn" value="SET"></div></div>',
-  );
+    //create deleteBtn
+    let $deleteBtn = document.createElement('span');
+    $deleteBtn.id = 'deleteBtn';
+    $deleteBtn.classList.add('option_btn');
+    $deleteBtn.innerHTML =
+      '<img src="assets/delete.png" class="option_icon_lg">';
 
-  // $span.hover(function () {
-  $span.on('mouseenter', function () {
+    $options.append($alarmBtn);
+    $options.append($deleteBtn);
+  }
+
+  let $alarmOptions = document.createElement('div');
+  $alarmOptions.classList.add('setAlarmPanel');
+  $alarmOptions.innerHTML =
+    '<div id="radioBtns">' +
+    '<input type="radio" id="15min" name="alarmterm" value="15" checked> <label for="15min">15min</label> <br/>' +
+    '<input type="radio" id="30min" name="alarmterm" value="30" > <label for="30min">30min</label> <br/>' +
+    '<input type="radio" id="1hr" name="alarmterm" value="60"> <label for="1hr">1hr</label> <br/>' +
+    '<input type="radio" id="3hrs" name="alarmterm" value="180"> <label for="3hr">3hrs</label><br> ' +
+    '</div> <div id="setBtn">' +
+    '<input type="submit" id="setAlarm" class="btn" value="SET"></div>';
+
+  $span.addEventListener('mouseenter', (event) => {
     $span.append($options);
-    let $this = $(this);
-    if (!$this.children().hasClass('directories')) {
-      $this.children().addClass('highlight');
+    event.stopPropagation();
+    // $span.innerHTML = $options;
+    // let $this = $(this);
+    let $this = event;
+    if ($this.target.children[0].classList[0] === 'bookmark_item') {
+      $this.target.children[0].classList.add('highlight');
     }
-    $this.append($options);
+    /* reference 
+      if ($this.target.children[0].matches('span') && $this.target && $this.target.matches('span.item')) {
 
-    $('#alarmBtn')
-      .off('click')
-      .on('click', function () {
-        const title = $bookmarkItem.text(),
-          link = $bookmarkItem[0].href;
+      }
+    */
+    let $alarmBtn = document.getElementById('alarmBtn');
+    // console.log($alarmBtn);
+    if ($alarmBtn) {
+      $alarmBtn.addEventListener('click', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        const title = $bookmarkItem.innerText,
+          link = $bookmarkItem.getAttribute('href');
         $span.append($alarmOptions);
-        $('#setAlarm').click(() => {
+
+        const $setAlarm = document.getElementById('setAlarm');
+        $setAlarm.addEventListener('click', (event) => {
+          event.stopPropagation();
+          event.stopImmediatePropagation();
           chrome.alarms.get(link, (alarm) => {
             if (alarm !== undefined) {
               showAlert('warning', 'The same alarm is already on you list.');
@@ -271,7 +330,9 @@ function dumpNode(bookmarkNode, query) {
               getAlarmCnt((count) => {
                 count++;
                 const notificationCnt = count.toString(),
-                  alarmTerm = $('input[name=alarmterm]:checked').val(),
+                  alarmTerm = document.querySelector(
+                    'input[name="alarmterm"]:checked',
+                  ).value,
                   minutes = parseFloat(alarmTerm);
                 chrome.browserAction.setBadgeText({ text: notificationCnt });
                 chrome.alarms.create(link, { delayInMinutes: minutes });
@@ -285,65 +346,71 @@ function dumpNode(bookmarkNode, query) {
               chrome.storage.sync.set({ [removeSpecialChar(link)]: 'set' });
             }
           });
+        }); // end of setAlarm click event
+      }); // end of alarm icon click event
+    }
+
+    const $addBtn = document.getElementById('addBtn');
+    if ($addBtn) {
+      $addBtn.addEventListener('click', (event) => {
+        event.stopPropagation();
+        chrome.tabs.query({ currentWindow: true, active: true }, (tabs) => {
+          const currentTab = tabs[0],
+            title = currentTab.title,
+            url = currentTab.url;
+          chrome.bookmarks.create(
+            { parentId: bookmarkNode.id, title: title, url: url },
+            (result) => {
+              if (result.url === url && result.title === title) {
+                showAlert('success', 'New bookmark has added!');
+                emptyObj('boomarkBoard');
+                dumpBookmarks();
+              } else {
+                showAlert('fail', '268:Oops! Error has occured..');
+              }
+            },
+          );
         });
-      }); //end of alarmBtn click
+      }); // end of create bookmark icon click event
+    }
 
-    $('#addBtn')
-      .off('click')
-      .on('click', function () {
-        chrome.tabs.query(
-          { currentWindow: true, active: true },
-          function (tabs) {
-            const currentTab = tabs[0],
-              title = currentTab.title,
-              url = currentTab.url;
-            chrome.bookmarks.create(
-              { parentId: bookmarkNode.id, title: title, url: url },
-              function (result) {
-                if (result.url === url && result.title === title) {
-                  showAlert('success', 'New bookmark has added!');
-                  $('#bookmarkBoard').empty();
-                  dumpBookmarks();
-                } else {
-                  showAlert('fail', '268:Oops! Error has occured..');
-                }
-              },
-            );
-          },
-        );
-      }); //end of addBtn click
+    let $deleteBtn = document.getElementById('deleteBtn');
+    if ($deleteBtn) {
+      $deleteBtn.addEventListener('click', (event) => {
+        event.stopPropagation();
+        event.stopImmediatePropagation();
+        if (confirm('Are you sure want to delete this bookmark?')) {
+          showAlert('success', 'Bookmark has deleted!');
+          chrome.bookmarks.remove(String(bookmarkNode.id));
+          $span.remove();
+        }
+      }); //end of delete icon click event
+    }
 
-    $('#deleteBtn').click(function () {
-      if (confirm('Are you sure want to delete this bookmark?')) {
-        showAlert('success', 'Bookmark has deleted!');
-        chrome.bookmarks.remove(String(bookmarkNode.id));
-        $span.parent().remove();
-      }
-    }); //end of deleteBtn click
+    //   // Need to improve
+    //   // $('.toggle')
+    //   //   .off('click')
+    //   //   .on('click', function () {
+    //   //     let $this = $(this).parent();
 
-    // Need to improve
-    // $('.toggle')
-    //   .off('click')
-    //   .on('click', function () {
-    //     let $this = $(this).parent();
-
-    //     if ($this.next().hasClass('show')) {
-    //       //where ul class is inner
-    //       $this.next().removeClass('show');
-    //     } else {
-    //       $this.parent().parent().find('li .inner-hide').removeClass('show');
-    //       $this.next().toggleClass('show');
-    //     }
-    //   }); //end of toggle click
-  }); //end of hover
+    //   //     if ($this.next().hasClass('show')) {
+    //   //       //where ul class is inner
+    //   //       $this.next().removeClass('show');
+    //   //     } else {
+    //   //       $this.parent().parent().find('li .inner-hide').removeClass('show');
+    //   //       $this.next().toggleClass('show');
+    //   //     }
+    //   //   }); //end of toggle click
+    // }); //end of hover
+  }); // end of mouseenter event
 
   //unhover
-  $span.on('mouseleave', function () {
-    let $this = $(this);
+  $span.addEventListener('mouseleave', (event) => {
+    let $this = event;
     $options.remove();
     $alarmOptions.remove();
-    $this.children().removeClass('highlight');
-  }); //end of hover;
+    $this.target.children[0].classList.remove('highlight');
+  });
 
   return $li;
 }
@@ -370,6 +437,7 @@ function getAlarmCnt(callback) {
 function showAlert(className, message) {
   const $messageContainer = document.createElement('div');
   $messageContainer.classList.add('alert', `alert-${className}`);
+
   const $message = document.createTextNode(`${message}`);
   $messageContainer.appendChild($message);
 
