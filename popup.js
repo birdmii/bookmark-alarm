@@ -266,7 +266,6 @@ function dumpNode(bookmarkNode, query) {
     $options.innerHTML =
       '<span id="addBtn" class="option_btn"><img src="assets/add.png" class="option_icon_lg"></span>';
   } else {
-    // $option = document.createElement('div');
     //create alarmBtn
     let $alarmBtn = document.createElement('span');
     $alarmBtn.id = 'alarmBtn';
@@ -298,8 +297,7 @@ function dumpNode(bookmarkNode, query) {
   $span.addEventListener('mouseenter', (event) => {
     $span.append($options);
     event.stopPropagation();
-    // $span.innerHTML = $options;
-    // let $this = $(this);
+    
     let $this = event;
     if ($this.target.children[0].classList[0] === 'bookmark_item') {
       $this.target.children[0].classList.add('highlight');
@@ -387,21 +385,31 @@ function dumpNode(bookmarkNode, query) {
       }); //end of delete icon click event
     }
 
-    //   // Need to improve
-    //   // $('.toggle')
-    //   //   .off('click')
-    //   //   .on('click', function () {
-    //   //     let $this = $(this).parent();
-
-    //   //     if ($this.next().hasClass('show')) {
-    //   //       //where ul class is inner
-    //   //       $this.next().removeClass('show');
-    //   //     } else {
-    //   //       $this.parent().parent().find('li .inner-hide').removeClass('show');
-    //   //       $this.next().toggleClass('show');
-    //   //     }
-    //   //   }); //end of toggle click
-    // }); //end of hover
+    // const toggleItem = document.querySelectorAll('.toggle');
+    // if (toggleItem) {
+    //   toggleItem.forEach((item) => {
+    //     item.addEventListener('click', (event) => {
+    //       event.stopPropagation();
+    //       event.stopImmediatePropagation();
+    //       const $targetElement = event.target.parentElement.nextSibling;
+    //       if ($targetElement.classList.contains('inner-hide')) {
+    //         $targetElement.classList.remove('inner-hide');
+    //         $targetElement.classList.add('inner-show');
+    //       } else {
+    //         $targetElement.classList.remove('inner-show');
+    //         $targetElement.classList.add('inner-hide');
+    //       }
+    // 
+    //          jQuery Code
+    //       // if ($this.next().hasClass('show')) {
+    //       //   //where ul class is inner
+    //       //   $this.next().removeClass('show');
+    //       // } else {
+    //       //   $this.parent().parent().find('li .inner-hide').removeClass('show');
+    //       //   $this.next().toggleClass('show');
+    //       // }
+    //   });
+    // }
   }); // end of mouseenter event
 
   //unhover
