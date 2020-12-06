@@ -75,10 +75,14 @@ window.addEventListener('DOMContentLoaded', (event) => {
     for (key in changes) {
       chrome.storage.sync.get(key, (result) => {
         if (result[key] === 'fired') {
-          let item = $('#' + removeSpecialChar(key));
+          let item = document.getElementById(removeSpecialChar(key));
           item.remove();
-          $('.row_end__item').hide();
         }
+        getAlarmCnt((count) => {
+          if (count === 0) {
+            toggleAlarmBoardTitle(false);
+          }
+        });
       });
     }
   });
@@ -242,7 +246,7 @@ function dumpNode(bookmarkNode, query) {
     }
   } else {
     $bookmarkItem.setAttribute('href', bookmarkNode.url);
-    $bookmarkItem.innerText = bookmarkNode.title;
+    $bookmarkItem.innerText = bookmarkNode.title !== '' ? bookmarkNode.title : 'untitled';
 
     $bookmarkItem.addEventListener('click', (event) => {
       chrome.tabs.create({ url: bookmarkNode.url });
@@ -260,9 +264,9 @@ function dumpNode(bookmarkNode, query) {
 
   /*When hovered item is a folder, show add button
    *when it's a bookmark, show alarm button*/
-  let $options = document.createElement('div');
+  let $options = document.createElement('span');
   if (bookmarkNode.children) {
-    $options = document.createElement('span');
+    // $options = document.createElement('span');
     $options.innerHTML =
       '<span id="addBtn" class="option_btn"><img src="assets/add.png" class="option_icon_lg"></span>';
   } else {
@@ -270,14 +274,14 @@ function dumpNode(bookmarkNode, query) {
     let $alarmBtn = document.createElement('span');
     $alarmBtn.id = 'alarmBtn';
     $alarmBtn.classList.add('option_btn');
-    $alarmBtn.innerHTML = '<img src="assets/alarm.png" class="option_icon_lg">';
+    $alarmBtn.innerHTML = '<img src="assets/alarm.png" class="option_icon_md">';
 
     //create deleteBtn
     let $deleteBtn = document.createElement('span');
     $deleteBtn.id = 'deleteBtn';
     $deleteBtn.classList.add('option_btn');
     $deleteBtn.innerHTML =
-      '<img src="assets/delete.png" class="option_icon_lg">';
+      '<img src="assets/delete.png" class="option_icon_md">';
 
     $options.append($alarmBtn);
     $options.append($deleteBtn);
@@ -287,7 +291,7 @@ function dumpNode(bookmarkNode, query) {
   $alarmOptions.classList.add('setAlarmPanel');
   $alarmOptions.innerHTML =
     '<div id="radioBtns">' +
-    '<input type="radio" id="15min" name="alarmterm" value="15" checked> <label for="15min">15min</label> <br/>' +
+    '<input type="radio" id="15min" name="alarmterm" value="0.1" checked> <label for="15min">15min</label> <br/>' +
     '<input type="radio" id="30min" name="alarmterm" value="30" > <label for="30min">30min</label> <br/>' +
     '<input type="radio" id="1hr" name="alarmterm" value="60"> <label for="1hr">1hr</label> <br/>' +
     '<input type="radio" id="3hrs" name="alarmterm" value="180"> <label for="3hr">3hrs</label><br> ' +
@@ -297,7 +301,7 @@ function dumpNode(bookmarkNode, query) {
   $span.addEventListener('mouseenter', (event) => {
     $span.append($options);
     event.stopPropagation();
-    
+
     let $this = event;
     if ($this.target.children[0].classList[0] === 'bookmark_item') {
       $this.target.children[0].classList.add('highlight');
@@ -385,31 +389,32 @@ function dumpNode(bookmarkNode, query) {
       }); //end of delete icon click event
     }
 
-    // const toggleItem = document.querySelectorAll('.toggle');
-    // if (toggleItem) {
-    //   toggleItem.forEach((item) => {
-    //     item.addEventListener('click', (event) => {
-    //       event.stopPropagation();
-    //       event.stopImmediatePropagation();
-    //       const $targetElement = event.target.parentElement.nextSibling;
-    //       if ($targetElement.classList.contains('inner-hide')) {
-    //         $targetElement.classList.remove('inner-hide');
-    //         $targetElement.classList.add('inner-show');
-    //       } else {
-    //         $targetElement.classList.remove('inner-show');
-    //         $targetElement.classList.add('inner-hide');
-    //       }
-    // 
-    //          jQuery Code
-    //       // if ($this.next().hasClass('show')) {
-    //       //   //where ul class is inner
-    //       //   $this.next().removeClass('show');
-    //       // } else {
-    //       //   $this.parent().parent().find('li .inner-hide').removeClass('show');
-    //       //   $this.next().toggleClass('show');
-    //       // }
-    //   });
-    // }
+    const toggleItem = document.querySelectorAll('.toggle');
+    if (toggleItem) {
+      toggleItem.forEach((item) => {
+        item.addEventListener('click', (event) => {
+          event.stopPropagation();
+          event.stopImmediatePropagation();
+          const $targetElement = event.target.parentElement.nextSibling;
+          if ($targetElement.classList.contains('inner-hide')) {
+            $targetElement.classList.remove('inner-hide');
+            $targetElement.classList.add('inner-show');
+          } else {
+            $targetElement.classList.remove('inner-show');
+            $targetElement.classList.add('inner-hide');
+          }
+
+          //  jQuery Code
+          // if ($this.next().hasClass('show')) {
+          //   //where ul class is inner
+          //   $this.next().removeClass('show');
+          // } else {
+          //   $this.parent().parent().find('li .inner-hide').removeClass('show');
+          //   $this.next().toggleClass('show');
+          // }
+        });
+      });
+    }
   }); // end of mouseenter event
 
   //unhover
