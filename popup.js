@@ -23,18 +23,19 @@ window.addEventListener('DOMContentLoaded', (event) => {
   alarmItems.addEventListener('click', (event) => {
     if (event.target && event.target.matches('img')) {
       const alarmItem = event.target.parentElement.parentElement;
-      const link = alarmItem.classList[0];
+      const id = alarmItem.id;
       let isLeft = true;
 
       getAlarmCnt((count) => {
         count === 0 ? 0 : count--;
         const notificationCnt = count.toString();
         if (notificationCnt === '0') {
-          chrome.browserAction.setBadgeText({ text: '' });
+          setIconBadgeText('');
           isLeft = false;
-        } else chrome.browserAction.setBadgeText({ text: notificationCnt });
-
-        chrome.alarms.clear(link, (wasCleared) => {
+        } else {
+          setIconBadgeText(notificationCnt);
+        }
+        chrome.alarms.clear(id, (wasCleared) => {
           if (wasCleared) {
             alarmItem.remove();
             if (!isLeft) {
@@ -60,7 +61,7 @@ window.addEventListener('DOMContentLoaded', (event) => {
         chrome.alarms.clearAll((wasCleared) => {
           if (wasCleared) {
             showAlert('success', 'All bookmark alarm is cleared!');
-            chrome.browserAction.setBadgeText({ text: '' });
+            setIconBadgeText('');
           } else {
             showAlert('fail', '56:Oops! Error has occured..');
           }
@@ -73,9 +74,10 @@ window.addEventListener('DOMContentLoaded', (event) => {
 
   chrome.storage.onChanged.addListener((changes, namespace) => {
     for (key in changes) {
-      chrome.storage.sync.get(key, (result) => {
+      chrome.storage.local.get(key, (result) => {
         if (result[key] === 'fired') {
-          let item = document.getElementById(removeSpecialChar(key));
+          chrome.storage.local.remove(key);
+          let item = document.getElementById(key);
           item.remove();
         }
         getAlarmCnt((count) => {
@@ -100,15 +102,17 @@ function getBookmarkAlarms() {
   //User clicked set alarm button
   chrome.alarms.getAll((Alarms) => {
     for (let i = 0; i < Alarms.length; i++) {
-      const link = Alarms[i].name;
-      chrome.bookmarks.search(Alarms[i].name, (BookmarkTreeNodes) => {
-        const title = BookmarkTreeNodes[0].title,
-          $item = createAlarmItem(link, title);
+      const id = Alarms[i].name;
+      chrome.bookmarks.get(Alarms[i].name, (BookmarkTreeNodes) => {
+        const title = BookmarkTreeNodes[0].title;
+        const url = BookmarkTreeNodes[0].url;
+        const $item = createAlarmItem(url, title, id);
         $alarmList.append($item);
       });
     }
+    setIconBadgeText(Alarms.length.toString());
   });
-  return $alarmList;
+  return alarmList;
 }
 
 /**
@@ -118,7 +122,7 @@ function getBookmarkAlarms() {
  */
 function setBookmarkAlarms(obj) {
   let $alarmList = document.getElementById('alarmList');
-  let $item = createAlarmItem(obj.alarmLink, obj.alarmTitle);
+  let $item = createAlarmItem(obj.alarmLink, obj.alarmTitle, obj.bookmarkId);
 
   toggleAlarmBoardTitle(true);
   $alarmList.append($item);
@@ -130,9 +134,9 @@ function setBookmarkAlarms(obj) {
  * @param {String} title
  * @return {li object}
  */
-function createAlarmItem(link, title) {
+function createAlarmItem(link, title, id) {
   let $item = document.createElement('li');
-  $item.id = removeSpecialChar(link);
+  $item.id = id; /* *_* */
   $item.classList.add(`${link}`, 'alarm_item');
   $item.innerHTML =
     title +
@@ -149,16 +153,6 @@ function toggleAlarmBoardTitle(isShow) {
   document.querySelectorAll('.row_end__item').forEach((item) => {
     item.style.display = isShow ? 'block' : 'none';
   });
-}
-/**
- * removeSpecialChar() returns a string
- * removed all special characters
- *
- * @param {String} urlId
- * @return {String}
- */
-function removeSpecialChar(urlId) {
-  return urlId.replace(/[^\w\s]/gi, '');
 }
 
 /**
@@ -179,7 +173,7 @@ function emptyObj(el) {
  *
  * @param {String} query
  */
-async function dumpBookmarks(query) {
+function dumpBookmarks(query) {
   chrome.bookmarks.getTree(function (bookmarkTreeNodes) {
     let $bookmarkBoard = document.getElementById('bookmarkBoard');
     $bookmarkBoard.append(dumpTreeNodes(bookmarkTreeNodes, query));
@@ -227,6 +221,7 @@ function dumpNode(bookmarkNode, query) {
 
   let $bookmarkItem = document.createElement('a');
   $bookmarkItem.classList.add('bookmark_item');
+  $bookmarkItem.id = bookmarkNode.id;
 
   if (bookmarkNode.title) {
     if (query && !bookmarkNode.children) {
@@ -246,7 +241,8 @@ function dumpNode(bookmarkNode, query) {
     }
   } else {
     $bookmarkItem.setAttribute('href', bookmarkNode.url);
-    $bookmarkItem.innerText = bookmarkNode.title !== '' ? bookmarkNode.title : 'untitled';
+    $bookmarkItem.innerText =
+      bookmarkNode.title !== '' ? bookmarkNode.title : 'untitled';
 
     $bookmarkItem.addEventListener('click', (event) => {
       chrome.tabs.create({ url: bookmarkNode.url });
@@ -256,17 +252,16 @@ function dumpNode(bookmarkNode, query) {
 
   let $li = bookmarkNode.title
     ? document.createElement('li')
-    : document.createElement('div');
+    : document.createElement('span');
   $li.append($span);
   if (bookmarkNode.children && bookmarkNode.children.length > 0) {
     $li.append(dumpTreeNodes(bookmarkNode.children, query));
   }
 
-  /*When hovered item is a folder, show add button
-   *when it's a bookmark, show alarm button*/
+  // When hovered item is a folder, show add button
+  // when it's a bookmark, show alarm button
   let $options = document.createElement('span');
   if (bookmarkNode.children) {
-    // $options = document.createElement('span');
     $options.innerHTML =
       '<span id="addBtn" class="option_btn"><img src="assets/add.png" class="option_icon_lg"></span>';
   } else {
@@ -291,7 +286,7 @@ function dumpNode(bookmarkNode, query) {
   $alarmOptions.classList.add('setAlarmPanel');
   $alarmOptions.innerHTML =
     '<div id="radioBtns">' +
-    '<input type="radio" id="15min" name="alarmterm" value="0.1" checked> <label for="15min">15min</label> <br/>' +
+    '<input type="radio" id="15min" name="alarmterm" value="15" checked> <label for="15min">15min</label> <br/>' +
     '<input type="radio" id="30min" name="alarmterm" value="30" > <label for="30min">30min</label> <br/>' +
     '<input type="radio" id="1hr" name="alarmterm" value="60"> <label for="1hr">1hr</label> <br/>' +
     '<input type="radio" id="3hrs" name="alarmterm" value="180"> <label for="3hr">3hrs</label><br> ' +
@@ -300,52 +295,51 @@ function dumpNode(bookmarkNode, query) {
 
   $span.addEventListener('mouseenter', (event) => {
     $span.append($options);
-    event.stopPropagation();
 
     let $this = event;
     if ($this.target.children[0].classList[0] === 'bookmark_item') {
       $this.target.children[0].classList.add('highlight');
     }
-    /* reference 
-      if ($this.target.children[0].matches('span') && $this.target && $this.target.matches('span.item')) {
 
-      }
-    */
     let $alarmBtn = document.getElementById('alarmBtn');
-    // console.log($alarmBtn);
     if ($alarmBtn) {
       $alarmBtn.addEventListener('click', (event) => {
         event.preventDefault();
         event.stopPropagation();
-        const title = $bookmarkItem.innerText,
-          link = $bookmarkItem.getAttribute('href');
+        const title = $bookmarkItem.innerText;
+        const link = $bookmarkItem.getAttribute('href');
+        const id = $bookmarkItem.id;
         $span.append($alarmOptions);
 
         const $setAlarm = document.getElementById('setAlarm');
         $setAlarm.addEventListener('click', (event) => {
-          event.stopPropagation();
           event.stopImmediatePropagation();
-          chrome.alarms.get(link, (alarm) => {
+          chrome.alarms.get(id, (alarm) => {
             if (alarm !== undefined) {
               showAlert('warning', 'The same alarm is already on you list.');
             } else {
               getAlarmCnt((count) => {
                 count++;
-                const notificationCnt = count.toString(),
-                  alarmTerm = document.querySelector(
-                    'input[name="alarmterm"]:checked',
-                  ).value,
-                  minutes = parseFloat(alarmTerm);
-                chrome.browserAction.setBadgeText({ text: notificationCnt });
-                chrome.alarms.create(link, { delayInMinutes: minutes });
-                // chrome.storage.sync.set({ minutes: minutes });
+                const notificationCnt = count.toString();
+                const alarmTerm = document.querySelector(
+                  'input[name="alarmterm"]:checked',
+                ).value;
+                const minutes = parseFloat(alarmTerm);
+                setIconBadgeText(notificationCnt);
+                // create a new bookmark alarm
+                chrome.alarms.create(id, { delayInMinutes: minutes });
                 showAlert(
                   'success',
                   `You 'll get alarmed in ${minutes}min about ${title}`,
                 );
-                setBookmarkAlarms({ alarmTitle: title, alarmLink: link });
+                // add the new bookmark alarm item on UI
+                setBookmarkAlarms({
+                  alarmTitle: title,
+                  alarmLink: link,
+                  bookmarkId: id,
+                });
               });
-              chrome.storage.sync.set({ [removeSpecialChar(link)]: 'set' });
+              chrome.storage.local.set({ [id]: 'set' });
             }
           });
         }); // end of setAlarm click event
@@ -357,15 +351,15 @@ function dumpNode(bookmarkNode, query) {
       $addBtn.addEventListener('click', (event) => {
         event.stopPropagation();
         chrome.tabs.query({ currentWindow: true, active: true }, (tabs) => {
-          const currentTab = tabs[0],
-            title = currentTab.title,
-            url = currentTab.url;
+          const currentTab = tabs[0];
+          const title = currentTab.title;
+          const url = currentTab.url;
           chrome.bookmarks.create(
             { parentId: bookmarkNode.id, title: title, url: url },
             (result) => {
               if (result.url === url && result.title === title) {
                 showAlert('success', 'New bookmark has added!');
-                emptyObj('boomarkBoard');
+                emptyObj('bookmarkBoard');
                 dumpBookmarks();
               } else {
                 showAlert('fail', '268:Oops! Error has occured..');
@@ -403,15 +397,6 @@ function dumpNode(bookmarkNode, query) {
             $targetElement.classList.remove('inner-show');
             $targetElement.classList.add('inner-hide');
           }
-
-          //  jQuery Code
-          // if ($this.next().hasClass('show')) {
-          //   //where ul class is inner
-          //   $this.next().removeClass('show');
-          // } else {
-          //   $this.parent().parent().find('li .inner-hide').removeClass('show');
-          //   $this.next().toggleClass('show');
-          // }
         });
       });
     }
@@ -419,7 +404,7 @@ function dumpNode(bookmarkNode, query) {
 
   //unhover
   $span.addEventListener('mouseleave', (event) => {
-    let $this = event;
+    const $this = event;
     $options.remove();
     $alarmOptions.remove();
     $this.target.children[0].classList.remove('highlight');
@@ -438,6 +423,15 @@ function getAlarmCnt(callback) {
   chrome.alarms.getAll((alarms) => {
     callback(alarms.length);
   });
+}
+
+/**
+ * setIconBadgeText sets the number of bookmark alarm as a badge text of extension
+ *
+ * @param {String} alarmCnt
+ */
+function setIconBadgeText(alarmCnt) {
+  chrome.browserAction.setBadgeText({ text: alarmCnt });
 }
 
 /**

@@ -7,7 +7,7 @@
 
 body {
     width: 400px;
-    margin: 20px 20px 40px 20px;
+    margin: 20px 20px 30px 20px;
 }
 
 a {
@@ -21,6 +21,7 @@ li {
     padding-left: 0;
     list-style-type: none;
     margin-top: 0;
+    margin-bottom: 0;
 }
 
 li {
@@ -35,7 +36,9 @@ li {
 .row_end {
     display: flex;
     justify-content: space-between;
+    align-items: center;
     margin-top: 10px;
+    margin-bottom: 6px;
 }
 
 .row_end__item {
