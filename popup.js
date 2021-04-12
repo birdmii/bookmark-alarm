@@ -349,7 +349,9 @@ function dumpNode(bookmarkNode, query) {
     const $addBtn = document.getElementById('addBtn');
     if ($addBtn) {
       $addBtn.addEventListener('click', (event) => {
-        event.stopPropagation();
+        console.log(event.bubbles);
+        event.stopImmediatePropagation();
+
         chrome.tabs.query({ currentWindow: true, active: true }, (tabs) => {
           const currentTab = tabs[0];
           const title = currentTab.title;
